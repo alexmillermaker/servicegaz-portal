@@ -1,0 +1,402 @@
+// ============================================================
+// БАЗА ДАННЫХ — UNITorg SG · ГК «СЕРВИСГАЗ»
+// ============================================================
+
+export type UserRole   = 'EMPLOYEE' | 'HR'
+export type UserStatus = 'ACTIVE' | 'INVITED' | 'BLOCKED' | 'ARCHIVED'
+
+export interface Employee {
+  id:                 string
+  phone:              string
+  otp:                string
+  name:               string
+  position:           string
+  role:               UserRole
+  status:             UserStatus
+  department:         string
+  hireDate:           string
+  email:              string
+  lastLogin:          string
+  onboardingProgress: number[]
+}
+
+export interface Document {
+  id:          string
+  title:       string
+  version:     string
+  requiresAck: boolean
+  category:    string
+  fileUrl:     string
+  fileType:    'pdf' | 'docx' | 'xlsx'
+  fileSize:    string
+  assignedTo:  number
+  assignedDate: string
+  dueDate:     string
+}
+
+export interface NewsItem {
+  id:          string
+  title:       string
+  teaser:      string
+  content:     string
+  date:        string
+  isImportant: boolean
+  category:    string
+  author:      string
+  published:   boolean
+}
+
+export interface NavNode {
+  id:    string
+  label: string
+  room:  string
+  x:     number
+  y:     number
+}
+
+export interface NavEdge {
+  from: string
+  to:   string
+}
+
+export interface ActivityLogItem {
+  id:       number
+  time:     string
+  userInitials: string
+  userName: string
+  action:   'Создано' | 'Обновлено' | 'Назначено' | 'Просмотрено' | 'Заблокировано' | 'Удалено'
+  object:   string
+  details:  string
+}
+
+// ─── СОТРУДНИКИ ─────────────────────────────────────────────
+export const mockEmployees: Employee[] = [
+  {
+    id: 'emp-hr-1',
+    phone: '+79995556677',
+    otp: '222222',
+    name: 'Сидоров Александр Владимирович',
+    position: 'HR-директор',
+    role: 'HR',
+    status: 'ACTIVE',
+    department: 'Управление персоналом',
+    hireDate: '2024-01-10',
+    email: 'sidorov.a@servicegas.ru',
+    lastLogin: '2026-06-05 11:02',
+    onboardingProgress: [0, 1, 2, 3, 4, 5],
+  },
+  {
+    id: 'emp-1',
+    phone: '+79991112233',
+    otp: '111111',
+    name: 'Иванов Петр Сергеевич',
+    position: 'Инженер-конструктор',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'ИТ и цифровые решения',
+    hireDate: '2026-05-01',
+    email: 'petrov.i.s@servicegas.ru',
+    lastLogin: '2026-06-05 10:45',
+    onboardingProgress: [0, 1, 2, 3, 4],
+  },
+  {
+    id: 'emp-2',
+    phone: '+79992223344',
+    otp: '333333',
+    name: 'Сидорова Анна Викторовна',
+    position: 'Бухгалтер',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'Финансовый департамент',
+    hireDate: '2025-03-15',
+    email: 'sidorova.a.v@servicegas.ru',
+    lastLogin: '2026-06-05 09:12',
+    onboardingProgress: [0, 1, 2],
+  },
+  {
+    id: 'emp-3',
+    phone: '+79993334455',
+    otp: '444444',
+    name: 'Кузнецов Дмитрий Олегович',
+    position: 'Инженер',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'Производственный блок',
+    hireDate: '2026-04-01',
+    email: 'kuznetsov.d.o@servicegas.ru',
+    lastLogin: '2026-06-04 08:30',
+    onboardingProgress: [0],
+  },
+  {
+    id: 'emp-4',
+    phone: '+79994445566',
+    otp: '555555',
+    name: 'Морозова Елена Андреевна',
+    position: 'HR-менеджер',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'HR департамент',
+    hireDate: '2024-06-01',
+    email: 'morozova.e.a@servicegas.ru',
+    lastLogin: '2026-06-05 11:02',
+    onboardingProgress: [0, 1, 2, 3, 4, 5],
+  },
+  {
+    id: 'emp-5',
+    phone: '+79995556688',
+    otp: '666666',
+    name: 'Волков Алексей Павлович',
+    position: 'Специалист',
+    role: 'EMPLOYEE',
+    status: 'INVITED',
+    department: 'Служба безопасности',
+    hireDate: '2026-06-01',
+    email: 'volkov.a.p@servicegas.ru',
+    lastLogin: '—',
+    onboardingProgress: [],
+  },
+  {
+    id: 'emp-6',
+    phone: '+79996667788',
+    otp: '777777',
+    name: 'Галлямова Роза Ильдаровна',
+    position: 'Юрист',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'Юридический департамент',
+    hireDate: '2025-08-20',
+    email: 'gallyamova.r.i@servicegas.ru',
+    lastLogin: '2026-06-03 16:28',
+    onboardingProgress: [0, 1],
+  },
+  {
+    id: 'emp-7',
+    phone: '+79997778899',
+    otp: '888888',
+    name: 'Тихонов Сергей Николаевич',
+    position: 'Мастер',
+    role: 'EMPLOYEE',
+    status: 'BLOCKED',
+    department: 'Эксплуатация',
+    hireDate: '2023-11-05',
+    email: 'tikhonov.s.n@servicegas.ru',
+    lastLogin: '2026-05-10 11:03',
+    onboardingProgress: [],
+  },
+  {
+    id: 'emp-8',
+    phone: '+79998889900',
+    otp: '999999',
+    name: 'Лебедева Ольга Евгеньевна',
+    position: 'Менеджер',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'Коммерческий отдел',
+    hireDate: '2025-01-12',
+    email: 'lebedeva.o.e@servicegas.ru',
+    lastLogin: '2026-06-05 08:55',
+    onboardingProgress: [0, 1, 2, 3],
+  },
+  {
+    id: 'emp-9',
+    phone: '+79990001122',
+    otp: '121212',
+    name: 'Данилов Павел Андреевич',
+    position: 'Разработчик',
+    role: 'EMPLOYEE',
+    status: 'ARCHIVED',
+    department: 'ИТ и цифровые решения',
+    hireDate: '2022-05-01',
+    email: 'danilov.p.a@servicegas.ru',
+    lastLogin: '2026-03-15 16:20',
+    onboardingProgress: [0, 1, 2, 3, 4, 5],
+  },
+  {
+    id: 'emp-10',
+    phone: '+79990011223',
+    otp: '131313',
+    name: 'Егорова Светлана Владимировна',
+    position: 'Бухгалтер',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'Бухгалтерия',
+    hireDate: '2024-09-01',
+    email: 'egorova.s.v@servicegas.ru',
+    lastLogin: '2026-06-05 09:40',
+    onboardingProgress: [0, 1, 2, 3, 4],
+  },
+  {
+    id: 'emp-11',
+    phone: '+79990022334',
+    otp: '141414',
+    name: 'Петров Игорь Сергеевич',
+    position: 'Администратор',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    department: 'ИТ и цифровые решения',
+    hireDate: '2024-04-12',
+    email: 'petrov.i.s2@servicegas.ru',
+    lastLogin: '2026-06-05 10:45',
+    onboardingProgress: [0, 1, 2, 3, 4],
+  },
+  {
+    id: 'emp-blocked',
+    phone: '+79999990000',
+    otp: '000000',
+    name: 'Петров К.К.',
+    position: 'Не определено',
+    role: 'EMPLOYEE',
+    status: 'BLOCKED',
+    department: '',
+    hireDate: '',
+    email: '',
+    lastLogin: '—',
+    onboardingProgress: [],
+  },
+]
+
+// ─── ОНБОРДИНГ-ЧЕКЛИСТ ───────────────────────────────────────
+export const onboardingTasks = [
+  { id: 0, text: 'Получить пропуск в бюро пропусков (корп. 1, каб. 3)' },
+  { id: 1, text: 'Ознакомиться с ПВТР и подписать согласие' },
+  { id: 2, text: 'Пройти первичный инструктаж по охране труда' },
+  { id: 3, text: 'Получить спецодежду и СИЗ на складе АРТЕК' },
+  { id: 4, text: 'Пройти в медпункт (кабинет 12) для медосмотра' },
+  { id: 5, text: 'Познакомиться с руководителем подразделения' },
+]
+
+// ─── ДОКУМЕНТЫ ───────────────────────────────────────────────
+export const mockDocuments: Document[] = [
+  {
+    id: 'doc-1',
+    title: 'Регламент по охране труда.pdf',
+    version: '2.4',
+    requiresAck: true,
+    category: 'Охрана труда',
+    fileUrl: '#',
+    fileType: 'pdf',
+    fileSize: '1.2 МБ',
+    assignedTo: 12,
+    assignedDate: '2026-05-23',
+    dueDate: '2026-05-25',
+  },
+  {
+    id: 'doc-2',
+    title: 'Политика информационной безопасности.docx',
+    version: '1.1',
+    requiresAck: true,
+    category: 'Безопасность',
+    fileUrl: '#',
+    fileType: 'docx',
+    fileSize: '0.8 МБ',
+    assignedTo: 8,
+    assignedDate: '2026-05-22',
+    dueDate: '2026-05-29',
+  },
+  {
+    id: 'doc-3',
+    title: 'Инструкция по работе с системой.pdf',
+    version: '3.0',
+    requiresAck: true,
+    category: 'Обучение',
+    fileUrl: '#',
+    fileType: 'pdf',
+    fileSize: '2.4 МБ',
+    assignedTo: 6,
+    assignedDate: '2026-05-21',
+    dueDate: '2026-05-30',
+  },
+  {
+    id: 'doc-4',
+    title: 'Правила внутреннего трудового распорядка ГК СЕРВИСГАЗ',
+    version: '2.4',
+    requiresAck: true,
+    category: 'Трудовые отношения',
+    fileUrl: '#',
+    fileType: 'docx',
+    fileSize: '0.5 МБ',
+    assignedTo: 14,
+    assignedDate: '2026-05-20',
+    dueDate: '2026-06-10',
+  },
+  {
+    id: 'doc-5',
+    title: 'Памятка ДМС и социальных льгот сотрудника',
+    version: '3.0',
+    requiresAck: false,
+    category: 'Социальный пакет',
+    fileUrl: '#',
+    fileType: 'pdf',
+    fileSize: '1.8 МБ',
+    assignedTo: 0,
+    assignedDate: '2026-04-01',
+    dueDate: '—',
+  },
+]
+
+// ─── ЖУРНАЛ АКТИВНОСТИ ───────────────────────────────────────
+export const mockActivityLog: ActivityLogItem[] = [
+  { id: 1, time: '05.06.2026 10:45', userInitials: 'ИП', userName: 'Иван Петров',    action: 'Создано',    object: 'Сотрудник',  details: 'Добавлен сотрудник Петров Иван Сергеевич' },
+  { id: 2, time: '05.06.2026 10:32', userInitials: 'АС', userName: 'Анна Смирнова',  action: 'Обновлено',  object: 'Документ',   details: 'Обновлен документ «Регламент по охране труда.pdf»' },
+  { id: 3, time: '05.06.2026 09:58', userInitials: 'ДВ', userName: 'Дмитрий Волков', action: 'Назначено',  object: 'Адаптация',  details: 'Назначена программа адаптации «Инженер»' },
+  { id: 4, time: '05.06.2026 09:21', userInitials: 'ЕК', userName: 'Елена Кузнецова',action: 'Просмотрено',object: 'Отчёт',     details: 'Просмотрен отчёт «Адаптация сотрудников»' },
+  { id: 5, time: '05.06.2026 09:05', userInitials: 'МС', userName: 'Мария Соколова',  action: 'Создано',    object: 'Новость',    details: 'Опубликована новость «Запуск новой системы...»' },
+  { id: 6, time: '04.06.2026 17:14', userInitials: 'АС', userName: 'Сидоров Александр', action: 'Заблокировано', object: 'Сотрудник', details: 'Заблокирован доступ Тихонову С.Н.' },
+  { id: 7, time: '04.06.2026 16:30', userInitials: 'ИП', userName: 'Иван Петров',    action: 'Обновлено',  object: 'Документ',   details: 'Добавлен документ «Политика ИБ»' },
+]
+
+// ─── НОВОСТИ ─────────────────────────────────────────────────
+export const mockNews: NewsItem[] = [
+  {
+    id: 'news-1',
+    title: 'Запуск новой системы управления проектами',
+    teaser: 'В компании внедрена система управления проектами класса Enterprise...',
+    content: 'В компании внедрена система управления проектами класса Enterprise. Все сотрудники обязаны пройти обучение до 15 июня. Доступ к системе предоставляется через корпоративный портал.',
+    date: '2026-06-05',
+    isImportant: true,
+    category: 'HR',
+    author: 'Сидоров А.В.',
+    published: true,
+  },
+  {
+    id: 'news-2',
+    title: 'Расширение производственных мощностей',
+    teaser: 'ГК «СЕРВИСГАЗ» открывает новый производственный цех на заводе...',
+    content: 'ГК «СЕРВИСГАЗ» открывает новый производственный цех на заводе. Ввод в эксплуатацию запланирован на 3 квартал 2026 года. Набор персонала начнётся в июле.',
+    date: '2026-06-03',
+    isImportant: false,
+    category: 'Производство',
+    author: 'Пресс-служба',
+    published: true,
+  },
+  {
+    id: 'news-3',
+    title: 'Итоги корпоративного турнира по шахматам',
+    teaser: 'Подведены итоги ежегодного корпоративного турнира...',
+    content: 'Подведены итоги ежегодного корпоративного турнира по шахматам. Победителем стал Иванов П.С. из конструкторского отдела. Поздравляем!',
+    date: '2026-05-28',
+    isImportant: false,
+    category: 'События',
+    author: 'HR-отдел',
+    published: true,
+  },
+  {
+    id: 'news-4',
+    title: 'Обновление регламента охраны труда',
+    teaser: 'Вступает в силу обновлённый регламент охраны труда...',
+    content: 'С 1 июля 2026 года вступает в силу обновлённый регламент охраны труда. Ознакомьтесь с документом в разделе «Документы».',
+    date: '2026-05-20',
+    isImportant: true,
+    category: 'HR',
+    author: 'Служба ОТ',
+    published: false,
+  },
+]
+
+// ─── НАВИГАЦИОННЫЙ ГРАФ ──────────────────────────────────────
+export const navNodes: NavNode[] = [
+  { id: 'node-start-qr', label: 'Коридор (QR-старт)', room: 'Коридор',    x: 400, y: 270 },
+  { id: 'node-101',      label: 'Медпункт',           room: 'Кабинет 12', x: 140, y: 180 },
+  { id: 'node-202',      label: 'Сборка котлов ОЧАГ', room: 'Цех №1',     x: 380, y: 180 },
+  { id: 'node-404',      label: 'Склад АРТЕК',        room: 'Логистика',  x: 640, y: 180 },
+]

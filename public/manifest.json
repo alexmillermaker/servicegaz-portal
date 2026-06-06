@@ -1,0 +1,52 @@
+{
+  "name": "UNITorg SG · СЕРВИСГАЗ",
+  "short_name": "UNITorg SG",
+  "description": "Система онбординга ГК «СЕРВИСГАЗ»",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0079C2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ru",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Профиль",
+      "url": "/profile",
+      "description": "Перейти в профиль"
+    },
+    {
+      "name": "Документы",
+      "url": "/documents",
+      "description": "Документы для ознакомления"
+    }
+  ],
+  "screenshots": []
+}
