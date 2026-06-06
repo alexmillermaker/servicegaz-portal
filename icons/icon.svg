@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="115" fill="#0079C2"/>
+  <path d="M256 60C256 60 128 176 128 296C128 386 185.6 452 256 452C326.4 452 384 386 384 296C384 176 256 60 256 60Z" fill="white" opacity="0.95"/>
+  <path d="M256 160C256 160 200 226 200 284C200 320 225 352 256 352C287 352 312 320 312 284C312 226 256 160 256 160Z" fill="#0079C2"/>
+  <text x="256" y="430" text-anchor="middle" font-family="sans-serif" font-size="56" font-weight="700" fill="white" opacity="0.9">SG</text>
+</svg>

@@ -1,0 +1,1 @@
+var e=`/servicegaz-portal/servisgaz-logo.png`;export{e as t};

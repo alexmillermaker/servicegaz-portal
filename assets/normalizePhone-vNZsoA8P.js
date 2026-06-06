@@ -1,0 +1,1 @@
+function e(e){let t=e.replace(/\D/g,``);return t.length===11&&t.startsWith(`7`)?`+`+t:t.length===11&&t.startsWith(`8`)?`+7`+t.slice(1):t.length===10?`+7`+t:e.trim()}export{e as t};
