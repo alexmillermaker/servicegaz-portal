@@ -56,46 +56,59 @@ interface MapPoint {
 
 const allPoints: MapPoint[] = [
   // ── Верхний ряд (y=228..387, center y≈308) ──────────────────────
-  { id: 'design',     x: 178,  y: 308, label: 'Конструкторский отдел', room: 'Каб. 103', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'locker_m',   x: 387,  y: 308, label: 'Мужская раздевалка',    room: 'Каб. 104', category: 'locker',   floor: 1, building: 'b1' },
+  { id: 'design',     x: 180,  y: 308, label: 'Конструкторский отдел', room: 'Каб. 103', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'locker_m',   x: 399,  y: 308, label: 'Мужская раздевалка',    room: 'Каб. 104', category: 'locker',   floor: 1, building: 'b1' },
   { id: 'wc_m',       x: 546,  y: 268, label: 'Санузел (М)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
   { id: 'wc_f',       x: 592,  y: 268, label: 'Санузел (Ж)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
   { id: 'shower_m',   x: 546,  y: 348, label: 'Душевая (М)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
   { id: 'shower_f',   x: 592,  y: 348, label: 'Душевая (Ж)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
-  { id: 'locker_f',   x: 684,  y: 308, label: 'Женская раздевалка',    room: 'Каб. 106', category: 'locker',   floor: 1, building: 'b1' },
+  { id: 'locker_f',   x: 690,  y: 308, label: 'Женская раздевалка',    room: 'Каб. 106', category: 'locker',   floor: 1, building: 'b1' },
   { id: 'meeting',    x: 920,  y: 336, label: 'Переговорный кабинет',  room: 'Каб. 108', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'medic',      x: 1041, y: 307, label: 'Мед кабинет',          room: 'Каб. 109', category: 'service',  floor: 1, building: 'b1' },
+  { id: 'medic',      x: 1041, y: 307, label: 'Мед кабинет',           room: 'Каб. 109', category: 'service',  floor: 1, building: 'b1' },
   // ── Нижний ряд (y=467..655, center y≈561) ────────────────────
-  { id: 'otiz',       x: 190,  y: 561, label: 'ОТиЗ',                 room: 'Каб. 101', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'techdir',    x: 432,  y: 561, label: 'Технический директор',  room: 'Каб. 102', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'tech_dept',  x: 603,  y: 561, label: 'Технологический отдел', room: 'Каб. 201', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'tech_room1', x: 710,  y: 561, label: 'Техническое помещение', room: 'Тех. 1',   category: 'storage',  floor: 1, building: 'b1' },
-  { id: 'tech_room2', x: 766,  y: 561, label: 'Техническое помещение', room: 'Тех. 2',   category: 'storage',  floor: 1, building: 'b1' },
-  { id: 'security',   x: 947,  y: 561, label: 'Пост охраны',           room: 'Охрана',   category: 'security', floor: 1, building: 'b1' },
-  { id: 'hr',         x: 1031, y: 561, label: 'Отдел кадров',          room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
-  // ── Коридорные узлы (y=427) ──────────────────────────────────
+  { id: 'otiz',       x: 190,  y: 561, label: 'ОТиЗ',                  room: 'Каб. 101', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'techdir',    x: 432,  y: 561, label: 'Технический директор',   room: 'Каб. 102', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'tech_dept',  x: 603,  y: 561, label: 'Технологический отдел',  room: 'Каб. 201', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'tech_room1', x: 710,  y: 561, label: 'Техническое помещение',  room: 'Тех. 1',   category: 'storage',  floor: 1, building: 'b1' },
+  { id: 'tech_room2', x: 766,  y: 561, label: 'Техническое помещение',  room: 'Тех. 2',   category: 'storage',  floor: 1, building: 'b1' },
+  { id: 'security',   x: 947,  y: 561, label: 'Пост охраны',            room: 'Охрана',   category: 'security', floor: 1, building: 'b1' },
+  { id: 'hr',         x: 1031, y: 561, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
+  // ── Старт ────────────────────────────────────────────────────
+  { id: 'start',      x: 595,  y: 427, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
+  // ── Дверные узлы верхнего ряда (y=387, выход в коридор) ──────
+  { id: 'd_design',   x: 180,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_lm',       x: 399,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_lf',       x: 690,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_meeting',  x: 920,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // ── Дверные узлы нижнего ряда (y=467, выход в коридор) ───────
+  { id: 'd_otiz',     x: 190,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_techdir',  x: 432,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_tdept',    x: 603,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_tr1',      x: 710,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_tr2',      x: 766,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_sec',      x: 947,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_hr',       x: 1031, y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // ── Коридорные узлы (хребет, y=427) ──────────────────────────
   { id: 'c_otiz',     x: 185,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_locker_m', x: 387,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_locker_m', x: 399,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_techdir',  x: 432,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_wcs',      x: 548,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_showers',  x: 592,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_design',   x: 603,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_locker_f', x: 684,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_locker_f', x: 690,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_tech1',    x: 710,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_tech2',    x: 766,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_security', x: 947,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_right',    x: 963,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_hr',       x: 1031, y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'start',      x: 595,  y: 427, label: 'Вход / Коридор',       room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
 ]
 
 const visiblePoints = computed(() =>
   allPoints.filter(p => p.floor === selectedFloor.value.id && p.building === selectedBuilding.value.id && p.category !== 'corridor')
 )
 
-// Единый коридорный хребет y=128 (x: 39→396), обе строки комнат подключены к ближайшему узлу
 const edges: [string, string][] = [
-  // Коридорный хребет (слева → направо, y=427)
+  // ── Коридорный хребет (y=427) ────────────────────────────────
   ['c_otiz',     'c_locker_m'],
   ['c_locker_m', 'c_techdir'],
   ['c_techdir',  'c_wcs'],
@@ -108,24 +121,39 @@ const edges: [string, string][] = [
   ['c_tech2',    'c_security'],
   ['c_security', 'c_right'],
   ['c_right',    'c_hr'],
-  // Верхний ряд → коридор
-  ['design',     'c_otiz'],
-  ['locker_m',   'c_locker_m'],
-  ['wc_m',       'c_wcs'],
-  ['shower_m',   'c_wcs'],
-  ['wc_f',       'c_showers'],
-  ['shower_f',   'c_showers'],
-  ['locker_f',   'c_locker_f'],
-  ['meeting',    'c_right'],
+  // ── Дверные узлы → коридорный хребет ────────────────────────
+  ['d_design',   'c_otiz'],
+  ['d_lm',       'c_locker_m'],
+  ['d_lf',       'c_locker_f'],
+  ['d_meeting',  'c_right'],
+  ['d_otiz',     'c_otiz'],
+  ['d_techdir',  'c_techdir'],
+  ['d_tdept',    'c_design'],
+  ['d_tr1',      'c_tech1'],
+  ['d_tr2',      'c_tech2'],
+  ['d_sec',      'c_security'],
+  ['d_hr',       'c_hr'],
+  // ── Верхний ряд → дверные узлы ──────────────────────────────
+  ['design',     'd_design'],
+  ['locker_m',   'd_lm'],
+  ['locker_f',   'd_lf'],
+  ['meeting',    'd_meeting'],
   ['medic',      'c_right'],
-  // Нижний ряд → коридор
-  ['otiz',       'c_otiz'],
-  ['techdir',    'c_techdir'],
-  ['tech_dept',  'c_design'],
-  ['tech_room1', 'c_tech1'],
-  ['tech_room2', 'c_tech2'],
-  ['security',   'c_security'],
-  ['hr',         'c_hr'],
+  // ── WC / душевые через раздевалки (нет прямого выхода в коридор)
+  ['locker_m',   'wc_m'],
+  ['locker_m',   'shower_m'],
+  ['wc_m',       'shower_m'],
+  ['locker_f',   'wc_f'],
+  ['locker_f',   'shower_f'],
+  ['wc_f',       'shower_f'],
+  // ── Нижний ряд → дверные узлы ───────────────────────────────
+  ['otiz',       'd_otiz'],
+  ['techdir',    'd_techdir'],
+  ['tech_dept',  'd_tdept'],
+  ['tech_room1', 'd_tr1'],
+  ['tech_room2', 'd_tr2'],
+  ['security',   'd_sec'],
+  ['hr',         'd_hr'],
 ]
 
 function findPath(from: string, to: string): string[] {
@@ -336,12 +364,12 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
           <text x="178" y="333" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 103</text>
 
           <!-- Мужская раздевалка (11) -->
-          <rect x="250" y="228" width="274" height="159"
+          <rect x="274" y="228" width="250" height="159"
             :fill="roomFill('locker_m','')" :stroke="roomStroke('locker_m','')"
             stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_m')"/>
-          <text x="387" y="293" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужская</text>
-          <text x="387" y="315" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="387" y="336" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 104</text>
+          <text x="399" y="293" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужская</text>
+          <text x="399" y="315" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
+          <text x="399" y="336" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 104</text>
 
           <!-- Кластер WC/Душевые 2×2 (x=524..616, y=228..387) -->
           <rect x="524" y="228" width="44" height="79"
@@ -365,12 +393,12 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
           <text x="592" y="342" text-anchor="middle" font-size="13" fill="#0369a1" font-family="sans-serif" font-weight="700" style="pointer-events:none">Душ Ж</text>
 
           <!-- Женская раздевалка (6) -->
-          <rect x="616" y="228" width="137" height="159"
+          <rect x="616" y="228" width="147" height="159"
             :fill="roomFill('locker_f','')" :stroke="roomStroke('locker_f','')"
             stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_f')"/>
-          <text x="684" y="293" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женская</text>
-          <text x="684" y="314" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="684" y="334" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 106</text>
+          <text x="690" y="293" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женская</text>
+          <text x="690" y="314" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
+          <text x="690" y="334" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 106</text>
 
           <!-- Правое крыло: Переговорный (4) и Мед кабинет (2) -->
           <rect x="842" y="285" width="156" height="102"
