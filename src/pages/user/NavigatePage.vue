@@ -469,11 +469,6 @@ function roomStrokeOpacity(id: string): number {
           <!-- ═══ КОРИДОР ═══ -->
           <text x="580" y="415" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" letter-spacing="8" style="pointer-events:none">К О Р И Д О Р</text>
 
-          <!-- ═══ DEBUG: маркеры дверных узлов (убрать после проверки) ═══ -->
-          <g v-for="pt in allPoints.filter(p => p.category==='corridor' && p.floor===1 && p.building==='b1')" :key="'dbg-'+pt.id">
-            <circle :cx="pt.x" :cy="pt.y" r="5" fill="#f97316" stroke="white" stroke-width="1.5" opacity="0.9"/>
-          </g>
-
           <!-- ═══ МАРШРУТ ═══ -->
           <path v-if="routePath.length > 1"
             :d="svgRoutePath()"

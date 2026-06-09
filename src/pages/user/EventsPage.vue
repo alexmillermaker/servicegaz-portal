@@ -23,16 +23,17 @@ interface CalEvent {
   status: EventStatus
   location: string
   participants: number
+  participantNames: string[]
   description: string
 }
 
 const events = ref<CalEvent[]>([
-  { id: 1, title: 'Еженедельная планёрка HR', date: '2026-06-09', time: '10:00', type: 'meeting', status: 'upcoming', location: 'Переговорная №2', participants: 8, description: 'Еженедельный отчёт по показателям HR-отдела.' },
-  { id: 2, title: 'Летний корпоратив', date: '2026-06-21', time: '16:00', type: 'corporate', status: 'upcoming', location: 'Загородная база', participants: 45, description: 'Ежегодный летний корпоратив всей компании.' },
-  { id: 3, title: 'Курс по промышленной безопасности', date: '2026-06-15', time: '09:00', type: 'training', status: 'upcoming', location: 'Учебный центр', participants: 20, description: 'Обязательный курс по ПБ для технических специалистов.' },
-  { id: 4, title: 'Сдача квартального отчёта', date: '2026-06-30', time: '18:00', type: 'deadline', status: 'upcoming', location: 'Онлайн', participants: 5, description: 'Последний срок подачи отчётности за Q2 2026.' },
-  { id: 5, title: 'Стратегическая сессия', date: '2026-06-05', time: '14:00', type: 'meeting', status: 'past', location: 'Конференц-зал', participants: 15, description: '' },
-  { id: 6, title: 'Тренинг по продажам', date: '2026-05-28', time: '10:00', type: 'training', status: 'past', location: 'Зал А', participants: 12, description: '' },
+  { id: 1, title: 'Еженедельная планёрка HR', date: '2026-06-09', time: '10:00', type: 'meeting', status: 'upcoming', location: 'Переговорная №2', participants: 8, participantNames: ['Карина Белова', 'Дмитрий Орлов', 'Анна Соколова', 'Павел Крылов', 'Ирина Лебедева', 'Сергей Новиков', 'Ольга Фёдорова', 'Алексей Зайцев'], description: 'Еженедельный отчёт по показателям HR-отдела.' },
+  { id: 2, title: 'Летний корпоратив', date: '2026-06-21', time: '16:00', type: 'corporate', status: 'upcoming', location: 'Загородная база', participants: 45, participantNames: ['Весь коллектив компании (45 человек)'], description: 'Ежегодный летний корпоратив всей компании.' },
+  { id: 3, title: 'Курс по промышленной безопасности', date: '2026-06-15', time: '09:00', type: 'training', status: 'upcoming', location: 'Учебный центр', participants: 20, participantNames: ['Группа технических специалистов', 'Михаил Власов', 'Виктор Громов', 'Николай Тихонов', 'Андрей Котов', 'Роман Щербаков', 'Илья Морозов', 'Юрий Воронов', 'Денис Беляев', 'Максим Сидоров'], description: 'Обязательный курс по ПБ для технических специалистов.' },
+  { id: 4, title: 'Сдача квартального отчёта', date: '2026-06-30', time: '18:00', type: 'deadline', status: 'upcoming', location: 'Онлайн', participants: 5, participantNames: ['Карина Белова', 'Дмитрий Орлов', 'Ирина Лебедева', 'Павел Крылов', 'Анна Соколова'], description: 'Последний срок подачи отчётности за Q2 2026.' },
+  { id: 5, title: 'Стратегическая сессия', date: '2026-06-05', time: '14:00', type: 'meeting', status: 'past', location: 'Конференц-зал', participants: 15, participantNames: ['Руководящий состав', 'Карина Белова', 'Дмитрий Орлов', 'Сергей Новиков', 'Анна Соколова', 'Павел Крылов'], description: '' },
+  { id: 6, title: 'Тренинг по продажам', date: '2026-05-28', time: '10:00', type: 'training', status: 'past', location: 'Зал А', participants: 12, participantNames: ['Отдел продаж', 'Ольга Фёдорова', 'Алексей Зайцев', 'Роман Щербаков', 'Денис Беляев'], description: '' },
 ])
 
 const filter = ref<'all' | 'upcoming' | 'past'>('all')
@@ -44,10 +45,12 @@ const filtered = computed(() => {
 })
 
 const openedEvent = ref<CalEvent | null>(null)
+const showParticipants = ref(false)
 
 function openEvent(ev: CalEvent) {
   haptic.tap()
   openedEvent.value = ev
+  showParticipants.value = false
 }
 
 function typeColor(type: EventType) {
@@ -159,9 +162,16 @@ function formatMonth(dateStr: string) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <span>{{ openedEvent.location }}</span>
             </div>
-            <div class="event-sheet__row">
+            <div class="event-sheet__row event-sheet__row--clickable" @click="showParticipants = !showParticipants">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
               <span>{{ openedEvent.participants }} участников</span>
+              <svg class="event-sheet__chevron" :class="{ 'is-open': showParticipants }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div v-if="showParticipants" class="event-sheet__participants">
+              <div v-for="name in openedEvent.participantNames" :key="name" class="event-sheet__participant">
+                <span class="event-sheet__participant-dot" />
+                {{ name }}
+              </div>
             </div>
             <p v-if="openedEvent.description" class="event-sheet__desc">{{ openedEvent.description }}</p>
           </div>
@@ -306,6 +316,33 @@ function formatMonth(dateStr: string) {
   color: var(--c-text-2);
 }
 .event-sheet__row svg { color: var(--c-text-3); flex-shrink: 0; }
+.event-sheet__row--clickable { cursor: pointer; user-select: none; }
+.event-sheet__row--clickable:active { opacity: 0.6; }
+.event-sheet__chevron { margin-left: auto; color: var(--c-text-3); transition: transform 0.2s; }
+.event-sheet__chevron.is-open { transform: rotate(180deg); }
+.event-sheet__participants {
+  background: var(--c-bg);
+  border-radius: var(--r-md);
+  padding: var(--gap-sm) var(--gap-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -2px;
+}
+.event-sheet__participant {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+}
+.event-sheet__participant-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
 .event-sheet__desc {
   font-size: var(--fs-sm);
   color: var(--c-text-2);

@@ -73,11 +73,13 @@ function confirmLogout() { showLogoutConfirm.value = true }
 function doLogout() { showLogoutConfirm.value = false; auth.logout(); router.push('/auth/phone') }
 
 const quickContacts = [
-  { initials: 'РУК', label: 'Руководитель', role: 'Прямой контакт', color: '#dbeafe' },
-  { initials: 'IT', label: 'Служба поддержки', role: 'IT-поддержка', color: '#d1fae5' },
-  { initials: 'ОТ', label: 'Охрана труда', role: 'Специалист', color: '#fee2e2' },
-  { initials: 'HR', label: 'HR-отдел', role: 'Кадры', color: '#ede9fe' },
+  { initials: 'РУК', label: 'Руководитель', role: 'Прямой контакт', color: '#dbeafe', phone: '+7 (351) 123-45-01' },
+  { initials: 'IT',  label: 'Служба поддержки', role: 'IT-поддержка', color: '#d1fae5', phone: '+7 (351) 123-45-02' },
+  { initials: 'ОТ',  label: 'Охрана труда', role: 'Специалист', color: '#fee2e2', phone: '+7 (351) 123-45-03' },
+  { initials: 'HR',  label: 'HR-отдел', role: 'Кадры', color: '#ede9fe', phone: '+7 (351) 123-45-04' },
 ]
+const activeContact = ref<typeof quickContacts[0] | null>(null)
+function openContact(c: typeof quickContacts[0]) { haptic.tap(); activeContact.value = c }
 </script>
 
 <template>
@@ -212,13 +214,13 @@ const quickContacts = [
       <div class="profile__contacts-card">
         <h2 class="profile__contacts-title">Быстрые контакты</h2>
         <div class="profile__contacts-grid">
-          <div v-for="c in quickContacts" :key="c.label" class="profile__contact">
+          <button v-for="c in quickContacts" :key="c.label" class="profile__contact" @click="openContact(c)">
             <div class="profile__contact-avatar" :style="{ background: c.color }">
               <span class="profile__contact-initials">{{ c.initials }}</span>
             </div>
             <span class="profile__contact-name">{{ c.label }}</span>
             <span class="profile__contact-role">{{ c.role }}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -228,6 +230,28 @@ const quickContacts = [
 
     <div class="nav-spacer" />
     <MobileNavigation />
+
+    <!-- Быстрый контакт -->
+    <Teleport to="body">
+      <div v-if="activeContact" class="profile__confirm-overlay" @click.self="activeContact=null">
+        <div class="profile__confirm">
+          <div class="profile__contact-sheet-head">
+            <div class="profile__contact-avatar profile__contact-avatar--lg" :style="{ background: activeContact.color }">
+              <span class="profile__contact-initials profile__contact-initials--lg">{{ activeContact.initials }}</span>
+            </div>
+            <div>
+              <p class="profile__confirm-title">{{ activeContact.label }}</p>
+              <p class="profile__confirm-sub">{{ activeContact.role }}</p>
+            </div>
+          </div>
+          <a :href="'tel:' + activeContact.phone.replace(/\D/g,'')" class="profile__confirm-ok profile__confirm-ok--call">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            {{ activeContact.phone }}
+          </a>
+          <button class="profile__confirm-cancel" @click="activeContact=null">Закрыть</button>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Подтверждение выхода -->
     <Teleport to="body">
@@ -522,7 +546,15 @@ const quickContacts = [
   align-items: center;
   gap: 4px;
   text-align: center;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  cursor: pointer;
+  padding: 6px 2px;
+  border-radius: var(--r-md);
+  transition: background var(--dur-fast);
 }
+.profile__contact:active { background: var(--c-bg-2); }
 .profile__contact-avatar {
   width: 48px; height: 48px;
   border-radius: 50%;
@@ -530,9 +562,16 @@ const quickContacts = [
   align-items: center;
   justify-content: center;
 }
+.profile__contact-avatar--lg { width: 56px; height: 56px; flex-shrink: 0; }
 .profile__contact-initials { font-size: 11px; font-weight: 700; color: var(--c-text-2); }
+.profile__contact-initials--lg { font-size: 16px; }
 .profile__contact-name { font-size: 11px; font-weight: 600; color: var(--c-text); line-height: 1.3; }
 .profile__contact-role { font-size: 10px; color: var(--c-text-3); }
+.profile__contact-sheet-head { display: flex; align-items: center; gap: var(--gap-md); margin-bottom: var(--gap-xs); }
+.profile__confirm-ok--call {
+  display: flex; align-items: center; justify-content: center; gap: var(--gap-sm);
+  text-decoration: none; background: var(--c-accent) !important; color: #fff !important;
+}
 
 .profile__logout {
   font-size: var(--fs-sm);

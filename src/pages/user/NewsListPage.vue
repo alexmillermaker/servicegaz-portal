@@ -605,22 +605,21 @@ function categoryIcon(item: NewsItem): { bg: string; color: string; letter: stri
 
 .modal-sheet__reactions {
   display: flex;
-  gap: var(--gap-sm);
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .modal-sheet__reaction-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 14px;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: var(--r-full);
   border: 1.5px solid var(--c-border);
-  background: var(--c-surface);
+  background: var(--c-bg-2);
   font-family: var(--font-body);
   cursor: pointer;
   transition: all var(--dur-fast);
-  min-height: var(--touch-target);
   font-size: var(--fs-sm);
 }
 .modal-sheet__reaction-btn:active { transform: scale(0.94); }
@@ -629,8 +628,8 @@ function categoryIcon(item: NewsItem): { bg: string; color: string; letter: stri
   background: var(--c-accent-dim);
 }
 
-.modal-sheet__reaction-emoji { font-size: 20px; line-height: 1; }
-.modal-sheet__reaction-count { font-size: var(--fs-sm); font-weight: 600; color: var(--c-text-2); }
+.modal-sheet__reaction-emoji { font-size: 16px; line-height: 1; }
+.modal-sheet__reaction-count { font-size: 12px; font-weight: 600; color: var(--c-text-2); }
 .modal-sheet__reaction-btn.is-active .modal-sheet__reaction-count { color: var(--c-accent); }
 
 .modal-sheet__reaction-hint {
