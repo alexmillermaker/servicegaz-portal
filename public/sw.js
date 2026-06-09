@@ -1,8 +1,9 @@
-const CACHE_NAME = 'unitorg-sg-v1'
+const CACHE_NAME = 'unitorg-sg-v2'
+const BASE = '/servicegaz-portal'
 const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
-  '/servisgaz-logo.png',
+  BASE + '/',
+  BASE + '/manifest.json',
+  BASE + '/servisgaz-logo.png',
 ]
 
 // Install: pre-cache critical assets
@@ -40,7 +41,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((c) => c.put(request, clone))
           return res
         })
-        .catch(() => caches.match('/'))
+        .catch(() => caches.match(BASE + '/'))
     )
     return
   }

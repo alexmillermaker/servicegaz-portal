@@ -2,6 +2,17 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Restore route after GitHub Pages 404 redirect
+      (function() {
+        var path = sessionStorage.getItem('spa-path');
+        if (path) {
+          sessionStorage.removeItem('spa-path');
+          var base = location.pathname.replace(/\/$/, '');
+          history.replaceState(null, '', base + (path.startsWith('/') ? path : '/' + path));
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- ── PWA / App meta ── -->

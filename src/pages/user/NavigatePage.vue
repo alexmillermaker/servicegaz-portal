@@ -42,65 +42,57 @@ interface MapPoint {
 }
 
 // ── Корпус 1, Этаж 1. ViewBox 1190.55 × 841.89 ──────────────
-// Планировка (слева → направо):
+// Формула из spec(2048×881) → SVG(1190.55×841.89):
+//   svg_x = spec_x * 0.497 + 84
+//   svg_y = spec_y * 0.498 + 220
+// Якорь: MEETING spec(1525,130)→svg(842,285), spec(1839,335)→svg(998,387) — точное совпадение с path-данными SVG
 //
-// ВЕРХНИЙ РЯД (y=228..387):
-//   [12 Конструкторский | 11 Муж.раздевалка | WC/Душ 2×2 | 6 Жен.раздевалка | 4 Переговорная | 2 Мед кабинет]
+// ВЕРХНИЙ РЯД (svg y≈228..387):
+//   Конструкторский | Муж.раздевалка | WC/Душ кластер | Жен.раздевалка | Переговорная | Мед кабинет
 //
-// КОРИДОР (y=387..467)
+// КОРИДОР (svg y≈387..443)
 //
-// НИЖНИЙ РЯД (y=467..655):
-//   [14 ОТиЗ | (лестница) | 13 Техдиректор | 15 Технологический | 5а Техн.пом | 5б Техн.пом | (лестница) | 3 Охрана | 1 Отдел кадров]
-//
-// Коридорные узлы (category='corridor') связывают всё через BFS
-
+// НИЖНИЙ РЯД (svg y≈443..560):
+//   ОТиЗ | Техдиректор | Технологический | Техн.пом×2 | Охрана | Отдел кадров
 const allPoints: MapPoint[] = [
-  // ── Верхний ряд (y=228..387, center y≈308) ──────────────────────
-  { id: 'design',     x: 180,  y: 308, label: 'Конструкторский отдел', room: 'Каб. 103', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'locker_m',   x: 399,  y: 308, label: 'Мужская раздевалка',    room: 'Каб. 104', category: 'locker',   floor: 1, building: 'b1' },
-  { id: 'wc_m',       x: 546,  y: 268, label: 'Санузел (М)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
-  { id: 'wc_f',       x: 592,  y: 268, label: 'Санузел (Ж)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
-  { id: 'shower_m',   x: 546,  y: 348, label: 'Душевая (М)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
-  { id: 'shower_f',   x: 592,  y: 348, label: 'Душевая (Ж)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
-  { id: 'locker_f',   x: 690,  y: 308, label: 'Женская раздевалка',    room: 'Каб. 106', category: 'locker',   floor: 1, building: 'b1' },
-  { id: 'meeting',    x: 920,  y: 336, label: 'Переговорный кабинет',  room: 'Каб. 108', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'medic',      x: 1041, y: 307, label: 'Мед кабинет',           room: 'Каб. 109', category: 'service',  floor: 1, building: 'b1' },
-  // ── Нижний ряд (y=467..655, center y≈561) ────────────────────
-  { id: 'otiz',       x: 190,  y: 561, label: 'ОТиЗ',                  room: 'Каб. 101', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'techdir',    x: 432,  y: 561, label: 'Технический директор',   room: 'Каб. 102', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'tech_dept',  x: 603,  y: 561, label: 'Технологический отдел',  room: 'Каб. 201', category: 'office',   floor: 1, building: 'b1' },
-  { id: 'tech_room1', x: 710,  y: 561, label: 'Техническое помещение',  room: 'Тех. 1',   category: 'storage',  floor: 1, building: 'b1' },
-  { id: 'tech_room2', x: 766,  y: 561, label: 'Техническое помещение',  room: 'Тех. 2',   category: 'storage',  floor: 1, building: 'b1' },
-  { id: 'security',   x: 947,  y: 561, label: 'Пост охраны',            room: 'Охрана',   category: 'security', floor: 1, building: 'b1' },
-  { id: 'hr',         x: 1031, y: 561, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
-  // ── Старт ────────────────────────────────────────────────────
-  { id: 'start',      x: 595,  y: 427, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
-  // ── Дверные узлы верхнего ряда (y=387, выход в коридор) ──────
-  { id: 'd_design',   x: 180,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_lm',       x: 399,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_lf',       x: 690,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_meeting',  x: 920,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  // ── Дверные узлы нижнего ряда (y=467, выход в коридор) ───────
-  { id: 'd_otiz',     x: 190,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_techdir',  x: 432,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_tdept',    x: 603,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_tr1',      x: 710,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_tr2',      x: 766,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_sec',      x: 947,  y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_hr',       x: 1031, y: 467, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  // ── Коридорные узлы (хребет, y=427) ──────────────────────────
-  { id: 'c_otiz',     x: 185,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_locker_m', x: 399,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_techdir',  x: 432,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_wcs',      x: 548,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_showers',  x: 592,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_design',   x: 603,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_locker_f', x: 690,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_tech1',    x: 710,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_tech2',    x: 766,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_security', x: 947,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_right',    x: 963,  y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'c_hr',       x: 1031, y: 427, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // ── Верхний ряд ─────────────────────────────────────────────
+  { id: 'design',       x: 182,  y: 307, label: 'Конструкторский отдел', room: 'Каб. 103', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'locker_m',     x: 395,  y: 307, label: 'Мужская раздевалка',    room: 'Каб. 104', category: 'locker',   floor: 1, building: 'b1' },
+  { id: 'wc_m',         x: 546,  y: 306, label: 'Санузел (М)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
+  { id: 'shower_m',     x: 546,  y: 368, label: 'Душевая (М)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
+  { id: 'wc_f',         x: 592,  y: 285, label: 'Санузел (Ж)',           room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
+  { id: 'wc_f_bottom',  x: 592,  y: 325, label: 'Санузел (Ж) 2',        room: 'WC',       category: 'wc',       floor: 1, building: 'b1' },
+  { id: 'shower_f',     x: 592,  y: 368, label: 'Душевая (Ж)',           room: 'Душ',      category: 'shower',   floor: 1, building: 'b1' },
+  { id: 'locker_f',     x: 688,  y: 325, label: 'Женская раздевалка',    room: 'Каб. 106', category: 'locker',   floor: 1, building: 'b1' },
+  { id: 'meeting',      x: 920,  y: 336, label: 'Переговорный кабинет',  room: 'Каб. 108', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'medic',        x: 1044, y: 310, label: 'Мед кабинет',           room: 'Каб. 109', category: 'service',  floor: 1, building: 'b1' },
+  // ── Нижний ряд ──────────────────────────────────────────────
+  { id: 'otiz',         x: 151,  y: 478, label: 'ОТиЗ',                  room: 'Каб. 101', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'techdir',      x: 388,  y: 499, label: 'Технический директор',   room: 'Каб. 102', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'tech_dept',    x: 584,  y: 498, label: 'Технологический отдел',  room: 'Каб. 201', category: 'office',   floor: 1, building: 'b1' },
+  { id: 'tech_room1',   x: 760,  y: 464, label: 'Техн. помещение 1',      room: 'Тех. 1',   category: 'storage',  floor: 1, building: 'b1' },
+  { id: 'tech_room2',   x: 810,  y: 464, label: 'Техн. помещение 2',      room: 'Тех. 2',   category: 'storage',  floor: 1, building: 'b1' },
+  { id: 'security',     x: 1002, y: 464, label: 'Пост охраны',            room: 'Охрана',   category: 'security', floor: 1, building: 'b1' },
+  { id: 'hr',           x: 1057, y: 500, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
+  // ── Старт ───────────────────────────────────────────────────
+  { id: 'start',        x: 951,  y: 522, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
+  // ── Коридорные и дверные узлы ────────────────────────────────
+  { id: 'start_door',   x: 958,  y: 490, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_right',      x: 959,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_hr',         x: 1048, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_sec',        x: 1006, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_tr2',        x: 807,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_hall',       x: 815,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_hall',       x: 800,  y: 307, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_tdept',      x: 718,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_tech_dept',  x: 720,  y: 443, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_tr1',        x: 760,  y: 443, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_left',       x: 407,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_top',        x: 523,  y: 323, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_far_left',   x: 213,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_otiz',       x: 151,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_design_jct', x: 242,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_design',     x: 248,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
 ]
 
 const visiblePoints = computed(() =>
@@ -108,52 +100,35 @@ const visiblePoints = computed(() =>
 )
 
 const edges: [string, string][] = [
-  // ── Коридорный хребет (y=427) ────────────────────────────────
-  ['c_otiz',     'c_locker_m'],
-  ['c_locker_m', 'c_techdir'],
-  ['c_techdir',  'c_wcs'],
-  ['c_wcs',      'c_showers'],
-  ['c_showers',  'start'],
-  ['start',      'c_design'],
-  ['c_design',   'c_locker_f'],
-  ['c_locker_f', 'c_tech1'],
-  ['c_tech1',    'c_tech2'],
-  ['c_tech2',    'c_security'],
-  ['c_security', 'c_right'],
-  ['c_right',    'c_hr'],
-  // ── Дверные узлы → коридорный хребет ────────────────────────
-  ['d_design',   'c_otiz'],
-  ['d_lm',       'c_locker_m'],
-  ['d_lf',       'c_locker_f'],
-  ['d_meeting',  'c_right'],
-  ['d_otiz',     'c_otiz'],
-  ['d_techdir',  'c_techdir'],
-  ['d_tdept',    'c_design'],
-  ['d_tr1',      'c_tech1'],
-  ['d_tr2',      'c_tech2'],
-  ['d_sec',      'c_security'],
-  ['d_hr',       'c_hr'],
-  // ── Верхний ряд → дверные узлы ──────────────────────────────
-  ['design',     'd_design'],
-  ['locker_m',   'd_lm'],
-  ['locker_f',   'd_lf'],
-  ['meeting',    'd_meeting'],
-  ['medic',      'c_right'],
-  // ── WC / душевые через раздевалки (нет прямого выхода в коридор)
-  ['locker_m',   'wc_m'],
-  ['locker_m',   'shower_m'],
-  ['wc_m',       'shower_m'],
-  ['locker_f',   'wc_f'],
-  ['locker_f',   'shower_f'],
-  ['wc_f',       'shower_f'],
-  // ── Нижний ряд → дверные узлы ───────────────────────────────
+  // ── Коридорный хребет (горизонтальный, y=415 — центр коридора) ──
+  ['c_far_left',   'c_design_jct'],
+  ['c_design_jct', 'c_left'],
+  ['c_left',       'c_tdept'],
+  ['c_tdept',      'c_tr2'],
+  ['c_tr2',        'c_right'],
+  ['c_right',      'c_sec'],
+  ['c_sec',        'c_hr'],
+  // ── Вертикальные ответвления ──────────────────────────────────
+  ['c_far_left',   'd_otiz'],
+  ['c_design_jct', 'd_design'],
+  ['c_right',      'start_door'],
+  ['c_left',       'c_top'],
+  ['c_tr2',        'd_hall'],
+  ['d_hall',       'c_hall'],
+  // ── Комнаты → узлы ───────────────────────────────────────────
+  ['start',      'start_door'],
   ['otiz',       'd_otiz'],
-  ['techdir',    'd_techdir'],
-  ['tech_dept',  'd_tdept'],
+  ['design',     'd_design'],
+  ['meeting',    'c_hall'],
+  ['medic',      'c_hall'],
+  ['security',   'c_sec'],
+  ['hr',         'c_hr'],
+  ['tech_dept',  'd_tech_dept'],
+  ['d_tech_dept','c_tdept'],
+  ['tech_room2', 'c_tr2'],
   ['tech_room1', 'd_tr1'],
-  ['tech_room2', 'd_tr2'],
-  ['security',   'd_sec'],
-  ['hr',         'd_hr'],
+  ['d_tr1',      'c_tdept'],
+  ['techdir',    'c_left'],
 ]
 
 function findPath(from: string, to: string): string[] {
@@ -174,14 +149,18 @@ function findPath(from: string, to: string): string[] {
   return []
 }
 
+// Комнаты, доступные только со стороны Корпуса 2 — маршрут не строится
+const BUILDING2_ACCESS = new Set(['locker_m', 'locker_f', 'wc_m', 'wc_f', 'wc_f_bottom', 'shower_m', 'shower_f'])
+
 const targetId  = ref<string | null>(null)
 const startId   = ref('start')
 
 const targetPoint = computed(() => allPoints.find(p => p.id === targetId.value))
 const startPoint  = computed(() => allPoints.find(p => p.id === startId.value))
+const isBuilding2Target = computed(() => !!targetId.value && BUILDING2_ACCESS.has(targetId.value))
 
 const routePath = computed<string[]>(() =>
-  targetId.value ? findPath(startId.value, targetId.value) : []
+  targetId.value && !isBuilding2Target.value ? findPath(startId.value, targetId.value) : []
 )
 
 function svgRoutePath(): string {
@@ -216,6 +195,7 @@ function changeFloor(f: typeof floors[0]) {
   targetId.value = null
   startId.value = 'start'
 }
+
 
 const zoom = ref(1)
 function zoomIn()  { zoom.value = Math.min(zoom.value + 0.25, 2.5); haptic.tap() }
@@ -274,11 +254,17 @@ function roomFill(id: string, _default: string): string {
 function roomStroke(id: string, _default: string): string {
   if (targetId.value === id) return '#3b82f6'
   if (startId.value === id) return '#22c55e'
-  return 'rgba(0,0,0,0)'
+  return 'none'
+}
+function roomStrokeWidth(id: string): number {
+  if (targetId.value === id || startId.value === id) return 4
+  return 1.5
+}
+function roomStrokeOpacity(id: string): number {
+  if (targetId.value === id || startId.value === id) return 1
+  return 0.45
 }
 
-function labelX(pt: MapPoint) { return Math.min(Math.max(pt.x - 80, 16), 1020) }
-function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
 </script>
 
 <template>
@@ -353,133 +339,143 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
           <!-- Архитектурный план (фон) -->
           <image href="/maps/b1_floor1.svg" x="0" y="0" width="1190.55" height="841.89"/>
 
-          <!-- ═══ ВЕРХНИЙ РЯД (y=228..387) ═══ -->
+          <!-- ═══ ВЕРХНИЙ РЯД ═══ -->
 
-          <!-- Конструкторский отдел (12) -->
-          <rect x="107" y="228" width="143" height="159"
+          <!-- Конструкторский отдел -->
+          <polygon points="101,228 264,228 264,387 101,387"
             :fill="roomFill('design','')" :stroke="roomStroke('design','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('design')"/>
-          <text x="178" y="293" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Конструктор-</text>
-          <text x="178" y="313" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ский отдел</text>
-          <text x="178" y="333" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 103</text>
+            :stroke-width="roomStrokeWidth('design')" :stroke-opacity="roomStrokeOpacity('design')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('design')"/>
+          <text x="182" y="292" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Конструктор-</text>
+          <text x="182" y="309" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ский отдел</text>
+          <text x="182" y="324" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 103</text>
 
-          <!-- Мужская раздевалка (11) -->
-          <rect x="274" y="228" width="250" height="159"
+          <!-- Мужская раздевалка -->
+          <polygon points="269,228 520,228 520,387 269,387"
             :fill="roomFill('locker_m','')" :stroke="roomStroke('locker_m','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_m')"/>
-          <text x="399" y="293" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужская</text>
-          <text x="399" y="315" text-anchor="middle" font-size="20" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="399" y="336" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 104</text>
+            :stroke-width="roomStrokeWidth('locker_m')" :stroke-opacity="roomStrokeOpacity('locker_m')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_m')"/>
+          <text x="395" y="293" text-anchor="middle" font-size="17" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужская</text>
+          <text x="395" y="312" text-anchor="middle" font-size="17" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
+          <text x="395" y="328" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 104</text>
 
-          <!-- Кластер WC/Душевые 2×2 (x=524..616, y=228..387) -->
-          <rect x="524" y="228" width="44" height="79"
+          <!-- Мужской санузел -->
+          <polygon points="526,269 566,269 566,342 526,342"
             :fill="roomFill('wc_m','')" :stroke="roomStroke('wc_m','')"
             stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('wc_m')"/>
-          <text x="546" y="262" text-anchor="middle" font-size="14" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">WC М</text>
+          <text x="546" y="309" text-anchor="middle" font-size="11" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">WC М</text>
 
-          <rect x="568" y="228" width="48" height="79"
-            :fill="roomFill('wc_f','')" :stroke="roomStroke('wc_f','')"
-            stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('wc_f')"/>
-          <text x="592" y="262" text-anchor="middle" font-size="14" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">WC Ж</text>
-
-          <rect x="524" y="307" width="44" height="80"
+          <!-- Мужская душевая -->
+          <polygon points="526,348 566,348 566,387 526,387"
             :fill="roomFill('shower_m','')" :stroke="roomStroke('shower_m','')"
             stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('shower_m')"/>
-          <text x="546" y="342" text-anchor="middle" font-size="13" fill="#0369a1" font-family="sans-serif" font-weight="700" style="pointer-events:none">Душ М</text>
+          <text x="546" y="371" text-anchor="middle" font-size="10" fill="#0369a1" font-family="sans-serif" font-weight="700" style="pointer-events:none">Душ М</text>
 
-          <rect x="568" y="307" width="48" height="80"
+          <!-- Женский санузел верхний -->
+          <polygon points="572,268 613,268 613,302 572,302"
+            :fill="roomFill('wc_f','')" :stroke="roomStroke('wc_f','')"
+            stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('wc_f')"/>
+          <text x="592" y="288" text-anchor="middle" font-size="11" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">WC Ж</text>
+
+          <!-- Женский санузел нижний -->
+          <polygon points="572,308 613,308 613,342 572,342"
+            :fill="roomFill('wc_f_bottom','')" :stroke="roomStroke('wc_f_bottom','')"
+            stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('wc_f_bottom')"/>
+          <text x="592" y="328" text-anchor="middle" font-size="10" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">WC Ж2</text>
+
+          <!-- Женская душевая -->
+          <polygon points="572,348 613,348 613,387 572,387"
             :fill="roomFill('shower_f','')" :stroke="roomStroke('shower_f','')"
             stroke-width="2" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('shower_f')"/>
-          <text x="592" y="342" text-anchor="middle" font-size="13" fill="#0369a1" font-family="sans-serif" font-weight="700" style="pointer-events:none">Душ Ж</text>
+          <text x="592" y="371" text-anchor="middle" font-size="10" fill="#0369a1" font-family="sans-serif" font-weight="700" style="pointer-events:none">Душ Ж</text>
 
-          <!-- Женская раздевалка (6) -->
-          <rect x="616" y="228" width="147" height="159"
+          <!-- Женская раздевалка -->
+          <polygon points="618,263 757,263 757,387 618,387"
             :fill="roomFill('locker_f','')" :stroke="roomStroke('locker_f','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_f')"/>
-          <text x="690" y="293" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женская</text>
-          <text x="690" y="314" text-anchor="middle" font-size="19" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="690" y="334" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 106</text>
+            :stroke-width="roomStrokeWidth('locker_f')" :stroke-opacity="roomStrokeOpacity('locker_f')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_f')"/>
+          <text x="688" y="312" text-anchor="middle" font-size="16" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женская</text>
+          <text x="688" y="330" text-anchor="middle" font-size="16" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
+          <text x="688" y="345" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 106</text>
 
-          <!-- Правое крыло: Переговорный (4) и Мед кабинет (2) -->
-          <rect x="842" y="285" width="156" height="102"
+          <!-- Переговорная -->
+          <polygon points="842,285 998,285 998,387 842,387"
             :fill="roomFill('meeting','')" :stroke="roomStroke('meeting','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('meeting')"/>
-          <text x="920" y="328" text-anchor="middle" font-size="17" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Переговорная</text>
-          <text x="920" y="348" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 108</text>
+            :stroke-width="roomStrokeWidth('meeting')" :stroke-opacity="roomStrokeOpacity('meeting')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('meeting')"/>
+          <text x="920" y="329" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Переговорная</text>
+          <text x="920" y="345" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 108</text>
 
-          <rect x="998" y="228" width="86" height="159"
+          <!-- Мед кабинет (L-образный) -->
+          <polygon points="842,228 1085,228 1085,278 1096,278 1096,322 1085,322 1085,387 1004,387 1004,279 842,279"
             :fill="roomFill('medic','')" :stroke="roomStroke('medic','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('medic')"/>
-          <text x="1041" y="295" text-anchor="middle" font-size="17" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мед</text>
-          <text x="1041" y="313" text-anchor="middle" font-size="17" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">каб.</text>
-          <text x="1041" y="330" text-anchor="middle" font-size="13" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 109</text>
+            :stroke-width="roomStrokeWidth('medic')" :stroke-opacity="roomStrokeOpacity('medic')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('medic')"/>
+          <text x="1044" y="248" text-anchor="middle" font-size="14" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мед</text>
+          <text x="1044" y="264" text-anchor="middle" font-size="14" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">кабинет</text>
+          <text x="1044" y="277" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 109</text>
 
-          <!-- ═══ НИЖНИЙ РЯД (y=467..655) ═══ -->
+          <!-- ═══ НИЖНИЙ РЯД ═══ -->
 
-          <!-- ОТиЗ (14) -->
-          <rect x="107" y="467" width="165" height="188"
+          <!-- ОТиЗ -->
+          <polygon points="101,399 200,399 200,556 101,556"
             :fill="roomFill('otiz','')" :stroke="roomStroke('otiz','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('otiz')"/>
-          <text x="190" y="548" text-anchor="middle" font-size="20" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ОТиЗ</text>
-          <text x="190" y="569" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 101</text>
+            :stroke-width="roomStrokeWidth('otiz')" :stroke-opacity="roomStrokeOpacity('otiz')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('otiz')"/>
+          <text x="151" y="473" text-anchor="middle" font-size="16" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ОТиЗ</text>
+          <text x="151" y="490" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 101</text>
 
-          <!-- Технический директор (13), после левой лестницы x=272..340 -->
-          <rect x="340" y="467" width="184" height="188"
+          <!-- Технический директор -->
+          <polygon points="347,443 430,443 430,554 347,554"
             :fill="roomFill('techdir','')" :stroke="roomStroke('techdir','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('techdir')"/>
-          <text x="432" y="541" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технический</text>
-          <text x="432" y="561" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
-          <text x="432" y="581" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 102</text>
+            :stroke-width="roomStrokeWidth('techdir')" :stroke-opacity="roomStrokeOpacity('techdir')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('techdir')"/>
+          <text x="388" y="487" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технический</text>
+          <text x="388" y="502" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
+          <text x="388" y="516" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 102</text>
 
-          <!-- Технологический отдел (15) -->
-          <rect x="524" y="467" width="157" height="188"
+          <!-- Технологический отдел (L-образный) -->
+          <polygon points="435,443 733,443 733,490 837,490 837,553 435,553"
             :fill="roomFill('tech_dept','')" :stroke="roomStroke('tech_dept','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_dept')"/>
-          <text x="603" y="541" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технологи-</text>
-          <text x="603" y="561" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ческий</text>
-          <text x="603" y="581" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">отдел</text>
-          <text x="603" y="600" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 201</text>
+            :stroke-width="roomStrokeWidth('tech_dept')" :stroke-opacity="roomStrokeOpacity('tech_dept')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_dept')"/>
+          <text x="584" y="487" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технологический</text>
+          <text x="584" y="503" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">отдел</text>
+          <text x="584" y="517" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 201</text>
 
-          <!-- Тех. помещение 1 (5а) -->
-          <rect x="681" y="467" width="58" height="188"
+          <!-- Техн. помещение 1 -->
+          <polygon points="741,443 778,443 778,485 741,485"
             :fill="roomFill('tech_room1','')" :stroke="roomStroke('tech_room1','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_room1')"/>
-          <text x="710" y="546" text-anchor="middle" font-size="16" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">Тех.</text>
-          <text x="710" y="564" text-anchor="middle" font-size="16" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">пом.</text>
-          <text x="710" y="581" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">5а</text>
+            :stroke-width="roomStrokeWidth('tech_room1')" :stroke-opacity="roomStrokeOpacity('tech_room1')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_room1')"/>
+          <text x="760" y="467" text-anchor="middle" font-size="10" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">Тех.1</text>
 
-          <!-- Тех. помещение 2 (5б) -->
-          <rect x="739" y="467" width="54" height="188"
+          <!-- Техн. помещение 2 -->
+          <polygon points="783,443 837,443 837,485 783,485"
             :fill="roomFill('tech_room2','')" :stroke="roomStroke('tech_room2','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_room2')"/>
-          <text x="766" y="546" text-anchor="middle" font-size="16" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">Тех.</text>
-          <text x="766" y="564" text-anchor="middle" font-size="16" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">пом.</text>
-          <text x="766" y="581" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">5б</text>
+            :stroke-width="roomStrokeWidth('tech_room2')" :stroke-opacity="roomStrokeOpacity('tech_room2')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_room2')"/>
+          <text x="810" y="467" text-anchor="middle" font-size="10" fill="#475569" font-family="sans-serif" font-weight="700" style="pointer-events:none">Тех.2</text>
 
-          <!-- Пост охраны (3), после правой лестницы x=793..915 -->
-          <rect x="915" y="467" width="63" height="188"
+          <!-- Пост охраны -->
+          <polygon points="981,442 1023,442 1023,485 981,485"
             :fill="roomFill('security','')" :stroke="roomStroke('security','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('security')"/>
-          <text x="947" y="546" text-anchor="middle" font-size="16" fill="#c2410c" font-family="sans-serif" font-weight="700" style="pointer-events:none">Пост</text>
-          <text x="947" y="564" text-anchor="middle" font-size="16" fill="#c2410c" font-family="sans-serif" font-weight="700" style="pointer-events:none">охраны</text>
+            :stroke-width="roomStrokeWidth('security')" :stroke-opacity="roomStrokeOpacity('security')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('security')"/>
+          <text x="1002" y="459" text-anchor="middle" font-size="12" fill="#c2410c" font-family="sans-serif" font-weight="700" style="pointer-events:none">Пост</text>
+          <text x="1002" y="473" text-anchor="middle" font-size="12" fill="#c2410c" font-family="sans-serif" font-weight="700" style="pointer-events:none">охраны</text>
 
-          <!-- Отдел кадров (1) -->
-          <rect x="978" y="467" width="106" height="188"
+          <!-- Отдел кадров (L-образный) -->
+          <polygon points="1029,442 1085,442 1085,479 1096,479 1096,518 1085,518 1085,553 1017,553 1017,563 987,563 981,553 981,491 1029,491"
             :fill="roomFill('hr','')" :stroke="roomStroke('hr','')"
-            stroke-width="3" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('hr')"/>
-          <text x="1031" y="544" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Отдел</text>
-          <text x="1031" y="564" text-anchor="middle" font-size="18" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">кадров</text>
-          <text x="1031" y="583" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 205</text>
+            :stroke-width="roomStrokeWidth('hr')" :stroke-opacity="roomStrokeOpacity('hr')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('hr')"/>
+          <text x="1057" y="490" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Отдел</text>
+          <text x="1057" y="505" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">кадров</text>
+          <text x="1057" y="518" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 205</text>
 
           <!-- ═══ КОРИДОР ═══ -->
-          <text x="500" y="432" text-anchor="middle" font-size="18" fill="#8592a8" font-family="sans-serif" letter-spacing="8" style="pointer-events:none">К О Р И Д О Р</text>
+          <text x="580" y="415" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" letter-spacing="8" style="pointer-events:none">К О Р И Д О Р</text>
+
+          <!-- ═══ DEBUG: маркеры дверных узлов (убрать после проверки) ═══ -->
+          <g v-for="pt in allPoints.filter(p => p.category==='corridor' && p.floor===1 && p.building==='b1')" :key="'dbg-'+pt.id">
+            <circle :cx="pt.x" :cy="pt.y" r="5" fill="#f97316" stroke="white" stroke-width="1.5" opacity="0.9"/>
+          </g>
 
           <!-- ═══ МАРШРУТ ═══ -->
           <path v-if="routePath.length > 1"
             :d="svgRoutePath()"
-            fill="none" stroke="#0079C2" stroke-width="8"
+            fill="none" stroke="#0079C2" stroke-width="3"
             stroke-linecap="round" stroke-linejoin="round"
-            stroke-dasharray="16 8" class="route-anim"
+            stroke-dasharray="10 6" class="route-anim"
           />
 
           <!-- ═══ МАРКЕР СТАРТА ═══ -->
@@ -497,11 +493,6 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
               fill="#0079C2" stroke="white" stroke-width="2"
             />
             <circle :cx="targetPoint.x" :cy="targetPoint.y - 20" r="5.5" fill="white"/>
-            <g :transform="`translate(${labelX(targetPoint)}, ${labelY(targetPoint)})`">
-              <rect width="170" height="50" rx="12" fill="white" stroke="#c8d5e8" stroke-width="1.5" filter="url(#shadow)"/>
-              <text x="85" y="22" text-anchor="middle" font-size="17" fill="#0d1117" font-family="sans-serif" font-weight="700">{{ targetPoint.label }}</text>
-              <text x="85" y="40" text-anchor="middle" font-size="15" fill="#8592a8" font-family="sans-serif">{{ targetPoint.room }}</text>
-            </g>
           </template>
         </svg>
       </div>
@@ -548,15 +539,24 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
       </div>
     </div>
 
-    <div v-if="targetId && routePath.length === 0" class="nav-page__no-route">
+    <div v-if="isBuilding2Target" class="nav-page__building2-notice">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div>
+        <p class="nav-page__b2-title">Вход через Корпус 2</p>
+        <p class="nav-page__b2-sub">Это помещение доступно только со стороны Корпуса 2 — маршрут по данному этажу не строится.</p>
+      </div>
+    </div>
+
+    <div v-else-if="targetId && routePath.length === 0" class="nav-page__no-route">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       Прямой маршрут до этой точки не найден.
     </div>
 
     <div class="nav-page__btn-wrap">
-      <button class="nav-page__build-btn" :disabled="!targetId" @click="targetId && (showPointsList = false, haptic.light())">
+      <button class="nav-page__build-btn" :disabled="!targetId || isBuilding2Target"
+        @click="targetId && !isBuilding2Target && (showPointsList = false, haptic.light())">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        {{ targetId ? `Маршрут: ${targetPoint?.label}` : 'Выберите точку назначения' }}
+        {{ isBuilding2Target ? 'Вход через Корпус 2' : targetId ? `Маршрут: ${targetPoint?.label}` : 'Выберите точку назначения' }}
       </button>
     </div>
 
@@ -711,6 +711,18 @@ function labelY(pt: MapPoint) { return Math.max(pt.y - 100, 8) }
   transition: background var(--dur-fast);
 }
 .nav-page__change-btn:active { background: var(--c-bg-2); }
+
+/* Корпус 2 */
+.nav-page__building2-notice {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: var(--gap-sm) var(--gap-md) 0;
+  background: #eff6ff; color: #1d4ed8;
+  border: 1px solid #bfdbfe; border-radius: var(--r-lg);
+  padding: var(--gap-md); font-size: var(--fs-sm);
+}
+.nav-page__building2-notice svg { flex-shrink: 0; margin-top: 2px; }
+.nav-page__b2-title { font-weight: 700; margin-bottom: 2px; }
+.nav-page__b2-sub { font-size: var(--fs-xs); color: #3b82f6; line-height: 1.4; }
 
 /* Нет маршрута */
 .nav-page__no-route {
