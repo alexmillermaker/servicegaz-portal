@@ -73,10 +73,10 @@ function confirmLogout() { showLogoutConfirm.value = true }
 function doLogout() { showLogoutConfirm.value = false; auth.logout(); router.push('/auth/phone') }
 
 const quickContacts = [
-  { initials: 'РУК', label: 'Руководитель', role: 'Прямой контакт', color: '#dbeafe', phone: '+7 (351) 123-45-01' },
-  { initials: 'IT',  label: 'Служба поддержки', role: 'IT-поддержка', color: '#d1fae5', phone: '+7 (351) 123-45-02' },
-  { initials: 'ОТ',  label: 'Охрана труда', role: 'Специалист', color: '#fee2e2', phone: '+7 (351) 123-45-03' },
-  { initials: 'HR',  label: 'HR-отдел', role: 'Кадры', color: '#ede9fe', phone: '+7 (351) 123-45-04' },
+  { initials: 'РУК', label: 'Руководитель',    role: 'Прямой контакт', color: '#dbeafe', name: 'Андрей Викторович Петров',   email: 'a.petrov@servicegaz.ru',    phone: '+7 (351) 123-45-01' },
+  { initials: 'IT',  label: 'Служба поддержки', role: 'IT-поддержка',   color: '#d1fae5', name: 'Служба технической поддержки', email: 'it@servicegaz.ru',           phone: '+7 (351) 123-45-02' },
+  { initials: 'ОТ',  label: 'Охрана труда',     role: 'Специалист',     color: '#fee2e2', name: 'Наталья Сергеевна Громова',  email: 'n.gromova@servicegaz.ru',   phone: '+7 (351) 123-45-03' },
+  { initials: 'HR',  label: 'HR-отдел',         role: 'Кадры',          color: '#ede9fe', name: 'Карина Александровна Белова', email: 'hr@servicegaz.ru',           phone: '+7 (351) 123-45-04' },
 ]
 const activeContact = ref<typeof quickContacts[0] | null>(null)
 function openContact(c: typeof quickContacts[0]) { haptic.tap(); activeContact.value = c }
@@ -235,20 +235,46 @@ function openContact(c: typeof quickContacts[0]) { haptic.tap(); activeContact.v
     <Teleport to="body">
       <div v-if="activeContact" class="profile__confirm-overlay" @click.self="activeContact=null">
         <div class="profile__confirm">
+          <!-- Шапка карточки -->
           <div class="profile__contact-sheet-head">
             <div class="profile__contact-avatar profile__contact-avatar--lg" :style="{ background: activeContact.color }">
               <span class="profile__contact-initials profile__contact-initials--lg">{{ activeContact.initials }}</span>
             </div>
-            <div>
-              <p class="profile__confirm-title">{{ activeContact.label }}</p>
-              <p class="profile__confirm-sub">{{ activeContact.role }}</p>
+            <div class="profile__contact-sheet-info">
+              <p class="profile__contact-sheet-name">{{ activeContact.name }}</p>
+              <p class="profile__contact-sheet-role">{{ activeContact.label }} · {{ activeContact.role }}</p>
             </div>
           </div>
-          <a :href="'tel:' + activeContact.phone.replace(/\D/g,'')" class="profile__confirm-ok profile__confirm-ok--call">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            {{ activeContact.phone }}
-          </a>
-          <button class="profile__confirm-cancel" @click="activeContact=null">Закрыть</button>
+          <!-- Строки контакта -->
+          <div class="profile__contact-rows">
+            <div class="profile__contact-row">
+              <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="profile__contact-row-label">ФИО</span>
+              <span class="profile__contact-row-val">{{ activeContact.name }}</span>
+            </div>
+            <div class="profile__contact-row">
+              <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="profile__contact-row-label">Почта</span>
+              <a :href="'mailto:' + activeContact.email" class="profile__contact-row-link">{{ activeContact.email }}</a>
+            </div>
+            <div class="profile__contact-row">
+              <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span class="profile__contact-row-label">Телефон</span>
+              <a :href="'tel:' + activeContact.phone.replace(/\D/g,'')" class="profile__contact-row-link">{{ activeContact.phone }}</a>
+            </div>
+          </div>
+          <!-- Действия -->
+          <div class="profile__confirm-btns">
+            <a :href="'tel:' + activeContact.phone.replace(/\D/g,'')" class="profile__confirm-ok profile__confirm-ok--call">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Позвонить
+            </a>
+            <a :href="'mailto:' + activeContact.email" class="profile__confirm-cancel profile__confirm-cancel--mail">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Написать письмо
+            </a>
+            <button class="profile__confirm-cancel" @click="activeContact=null">Закрыть</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -567,10 +593,55 @@ function openContact(c: typeof quickContacts[0]) { haptic.tap(); activeContact.v
 .profile__contact-initials--lg { font-size: 16px; }
 .profile__contact-name { font-size: 11px; font-weight: 600; color: var(--c-text); line-height: 1.3; }
 .profile__contact-role { font-size: 10px; color: var(--c-text-3); }
-.profile__contact-sheet-head { display: flex; align-items: center; gap: var(--gap-md); margin-bottom: var(--gap-xs); }
+.profile__contact-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding-bottom: var(--gap-md);
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: var(--gap-xs);
+}
+.profile__contact-sheet-info { flex: 1; min-width: 0; }
+.profile__contact-sheet-name {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+.profile__contact-sheet-role { font-size: var(--fs-xs); color: var(--c-text-3); }
+
+.profile__contact-rows { display: flex; flex-direction: column; }
+.profile__contact-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  min-height: 44px;
+  padding: 10px 0;
+  font-size: var(--fs-sm);
+  border-bottom: 1px solid var(--c-border);
+}
+.profile__contact-row:last-child { border-bottom: none; }
+.profile__contact-row-label { color: var(--c-text-2); flex: 1; }
+.profile__contact-row-val { font-weight: 500; color: var(--c-text); text-align: right; max-width: 60%; font-size: var(--fs-sm); }
+.profile__contact-row-link {
+  font-weight: 500;
+  color: var(--c-accent);
+  text-align: right;
+  max-width: 60%;
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  word-break: break-all;
+}
+
 .profile__confirm-ok--call {
   display: flex; align-items: center; justify-content: center; gap: var(--gap-sm);
   text-decoration: none; background: var(--c-accent) !important; color: #fff !important;
+  min-height: 52px; border-radius: var(--r-lg); font-size: var(--fs-base); font-weight: 700;
+}
+.profile__confirm-cancel--mail {
+  display: flex; align-items: center; justify-content: center; gap: var(--gap-sm);
+  text-decoration: none;
 }
 
 .profile__logout {
