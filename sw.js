@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unitorg-sg-v6'
+const CACHE_NAME = 'unitorg-sg-v7'
 const BASE = '/servicegaz-portal'
 const STATIC_ASSETS = [
   BASE + '/',
