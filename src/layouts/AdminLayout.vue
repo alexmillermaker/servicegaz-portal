@@ -52,9 +52,10 @@ import AdminSidebar from '@/widgets/AdminSidebar.vue'
 import AppNotificationsDrawer from '@/shared/ui/AppNotificationsDrawer.vue'
 import { useAuthStore } from '@/store/auth'
 import { useNotifications } from '@/shared/composables/useNotifications'
-import { mockNews } from '@/api/mockData'
+import { useNewsStore } from '@/store/news'
 
 const auth = useAuthStore()
+const newsStore = useNewsStore()
 const { unreadCount } = useNotifications()
 const showNotif = ref(false)
 const collapsed = ref(false)
@@ -80,7 +81,7 @@ const PAGE_TITLES: Record<string, string> = {
 }
 const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'Панель управления')
 
-const latestNews = computed(() => mockNews.filter(n => n.published)[0] ?? null)
+const latestNews = computed(() => newsStore.published[0] ?? null)
 </script>
 
 <style scoped>
