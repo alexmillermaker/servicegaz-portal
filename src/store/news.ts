@@ -1,35 +1,14 @@
+// Репозиторий новостей. Источник данных — mockData.ts.
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { mockNews } from '@/api/mockData'
+import type { NewsItem } from '@/api/mockData'
 
-export interface NewsItem {
-  id: string
-  title: string
-  category: string
-  teaser: string
-  content: string
-  date: string
-  isImportant: boolean
-  author: string
-  status: 'published' | 'draft'
-  views: number
-}
+// Ре-экспорт типа для обратной совместимости импортов из страниц.
+export type { NewsItem }
 
 export const useNewsStore = defineStore('news', () => {
-  const items = ref<NewsItem[]>(
-    mockNews.map(n => ({
-      id: n.id,
-      title: n.title,
-      category: n.category,
-      teaser: n.teaser,
-      content: n.content,
-      date: n.date,
-      isImportant: n.isImportant,
-      author: n.author,
-      status: (n.published ? 'published' : 'draft') as 'published' | 'draft',
-      views: 0,
-    }))
-  )
+  const items = ref<NewsItem[]>(mockNews)
 
   const published = computed(() => items.value.filter(n => n.status === 'published'))
 

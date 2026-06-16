@@ -43,7 +43,8 @@ export interface NewsItem {
   isImportant: boolean
   category:    string
   author:      string
-  published:   boolean
+  status:      'published' | 'draft'
+  views:       number
 }
 
 export interface NavNode {
@@ -67,6 +68,67 @@ export interface ActivityLogItem {
   action:   'Создано' | 'Обновлено' | 'Назначено' | 'Просмотрено' | 'Заблокировано' | 'Удалено'
   object:   string
   details:  string
+}
+
+export interface AdaptTask {
+  label:   string
+  done:    boolean
+  detail?: string
+}
+
+export interface AdaptPlan {
+  id:          number
+  employeeId:  string
+  employee:    string
+  department:  string
+  position:    string
+  programName: string
+  progress:    number
+  status:      'active' | 'completed' | 'overdue'
+  startDate:   string
+  deadline:    string
+  mentor:      string
+  tasks:       AdaptTask[]
+}
+
+export type EventType   = 'meeting' | 'training' | 'corporate' | 'deadline'
+export type EventStatus = 'upcoming' | 'ongoing' | 'past'
+
+export interface CalEvent {
+  id:               number
+  title:            string
+  date:             string
+  time:             string
+  type:             EventType
+  status:           EventStatus
+  location:         string
+  participants:     number
+  participantNames: string[]
+  description:      string
+  visibility:       'all' | 'departments' | 'people'
+  audience:         string[]
+}
+
+export interface Enrollment {
+  id:           number
+  employeeId:   string
+  name:         string
+  department:   string
+  phone:        string
+  progress:     number
+  status:       'active' | 'completed' | 'overdue'
+  enrolledDate: string
+}
+
+export interface Course {
+  id:          number
+  title:       string
+  category:    string
+  duration:    string
+  deadline:    string
+  status:      'active' | 'draft' | 'archived'
+  mandatory:   boolean
+  enrollments: Enrollment[]
 }
 
 // ─── СОТРУДНИКИ ─────────────────────────────────────────────
@@ -356,7 +418,8 @@ export const mockNews: NewsItem[] = [
     isImportant: true,
     category: 'HR',
     author: 'Сидоров А.В.',
-    published: true,
+    status: 'published',
+    views: 0,
   },
   {
     id: 'news-2',
@@ -367,7 +430,8 @@ export const mockNews: NewsItem[] = [
     isImportant: false,
     category: 'Производство',
     author: 'Пресс-служба',
-    published: true,
+    status: 'published',
+    views: 0,
   },
   {
     id: 'news-3',
@@ -378,7 +442,8 @@ export const mockNews: NewsItem[] = [
     isImportant: false,
     category: 'События',
     author: 'HR-отдел',
-    published: true,
+    status: 'published',
+    views: 0,
   },
   {
     id: 'news-4',
@@ -389,7 +454,66 @@ export const mockNews: NewsItem[] = [
     isImportant: true,
     category: 'HR',
     author: 'Служба ОТ',
-    published: false,
+    status: 'draft',
+    views: 0,
+  },
+]
+
+// ─── АДАПТАЦИЯ (онбординг-планы) ─────────────────────────────
+export const mockAdaptPlans: AdaptPlan[] = [
+  { id: 1, employeeId: 'emp-1', employee: 'Иванов Петр Сергеевич', department: 'ИТ и цифровые решения', position: 'Инженер-конструктор', programName: 'Онбординг разработчика', progress: 65, status: 'active', startDate: '12.05.2026', deadline: '12.07.2026', mentor: 'Смирнов К.Д.', tasks: [{ label: 'Знакомство с командой', done: true, detail: 'Представиться коллегам в отделе и смежных подразделениях.' }, { label: 'Настройка рабочей среды', done: true, detail: 'Получить доступы к корпоративным системам и оборудованию.' }, { label: 'Изучение архитектуры', done: false, detail: 'Ознакомиться с технической документацией проекта.' }, { label: 'Первый pull request', done: false, detail: 'Подготовить и согласовать первый код-ревью.' }] },
+  { id: 2, employeeId: 'emp-4', employee: 'Морозова Елена Андреевна', department: 'HR департамент', position: 'HR-менеджер', programName: 'Онбординг HR-специалиста', progress: 100, status: 'completed', startDate: '01.04.2026', deadline: '01.06.2026', mentor: 'Карпова А.В.', tasks: [{ label: 'Знакомство с процессами', done: true }, { label: 'Изучение CRM', done: true }, { label: 'Первый самостоятельный найм', done: true }, { label: 'Аттестация', done: true }] },
+  { id: 3, employeeId: 'emp-3', employee: 'Кузнецов Дмитрий Олегович', department: 'Производственный блок', position: 'Инженер', programName: 'Адаптация инженера', progress: 30, status: 'overdue', startDate: '01.03.2026', deadline: '01.05.2026', mentor: 'Волков Д.Р.', tasks: [{ label: 'Инструктаж по ОТ и ТБ', done: true }, { label: 'Изучение регламентов', done: false }, { label: 'Работа под наблюдением', done: false }, { label: 'Самостоятельная смена', done: false }] },
+  { id: 4, employeeId: 'emp-2', employee: 'Сидорова Анна Викторовна', department: 'Финансовый департамент', position: 'Бухгалтер', programName: 'Онбординг бухгалтера', progress: 45, status: 'active', startDate: '20.05.2026', deadline: '20.07.2026', mentor: 'Карпова А.В.', tasks: [{ label: 'Знакомство с 1С', done: true }, { label: 'Изучение учётной политики', done: true }, { label: 'Первичная документация', done: false }, { label: 'Отчётный период', done: false }] },
+]
+
+// ─── СОБЫТИЯ (календарь) ─────────────────────────────────────
+export const mockEvents: CalEvent[] = [
+  { id: 1, title: 'Еженедельная планёрка HR', date: '2026-06-09', time: '10:00', type: 'meeting', status: 'upcoming', location: 'Переговорная №2', participants: 8, participantNames: ['Карина Белова', 'Дмитрий Орлов', 'Анна Соколова', 'Павел Крылов', 'Ирина Лебедева', 'Сергей Новиков', 'Ольга Фёдорова', 'Алексей Зайцев'], description: 'Еженедельный отчёт по показателям HR-отдела.', visibility: 'all', audience: [] },
+  { id: 2, title: 'Летний корпоратив', date: '2026-06-21', time: '16:00', type: 'corporate', status: 'upcoming', location: 'Загородная база', participants: 45, participantNames: ['Весь коллектив компании (45 человек)'], description: 'Ежегодный летний корпоратив всей компании.', visibility: 'all', audience: [] },
+  { id: 3, title: 'Курс по промышленной безопасности', date: '2026-06-15', time: '09:00', type: 'training', status: 'upcoming', location: 'Учебный центр', participants: 20, participantNames: ['Группа технических специалистов', 'Михаил Власов', 'Виктор Громов', 'Николай Тихонов', 'Андрей Котов', 'Роман Щербаков', 'Илья Морозов', 'Юрий Воронов', 'Денис Беляев', 'Максим Сидоров'], description: 'Обязательный курс по ПБ для технических специалистов.', visibility: 'all', audience: [] },
+  { id: 4, title: 'Сдача квартального отчёта', date: '2026-06-30', time: '18:00', type: 'deadline', status: 'upcoming', location: 'Онлайн', participants: 5, participantNames: ['Карина Белова', 'Дмитрий Орлов', 'Ирина Лебедева', 'Павел Крылов', 'Анна Соколова'], description: 'Последний срок подачи отчётности за Q2 2026.', visibility: 'all', audience: [] },
+  { id: 5, title: 'Стратегическая сессия', date: '2026-06-05', time: '14:00', type: 'meeting', status: 'past', location: 'Конференц-зал', participants: 15, participantNames: ['Руководящий состав', 'Карина Белова', 'Дмитрий Орлов', 'Сергей Новиков', 'Анна Соколова', 'Павел Крылов'], description: '', visibility: 'all', audience: [] },
+  { id: 6, title: 'Тренинг по продажам', date: '2026-05-28', time: '10:00', type: 'training', status: 'past', location: 'Зал А', participants: 12, participantNames: ['Отдел продаж', 'Ольга Фёдорова', 'Алексей Зайцев', 'Роман Щербаков', 'Денис Беляев'], description: '', visibility: 'all', audience: [] },
+]
+
+// ─── ОБУЧЕНИЕ (курсы и записи) ───────────────────────────────
+export const mockCourses: Course[] = [
+  { id: 1, title: 'Промышленная безопасность', category: 'Безопасность', duration: '8 часов', deadline: '30.06.2026', status: 'active', mandatory: true,
+    enrollments: [
+      { id: 1001, employeeId: 'emp-1', name: 'Иванов Петр Сергеевич', department: 'ИТ и цифровые решения', phone: '+79991112233', progress: 70, status: 'active', enrolledDate: '01.05.2026' },
+      { id: 1003, employeeId: 'emp-3', name: 'Кузнецов Дмитрий Олегович', department: 'Производственный блок', phone: '+79993334455', progress: 100, status: 'completed', enrolledDate: '01.05.2026' },
+      { id: 1005, employeeId: 'emp-5', name: 'Волков Алексей Павлович', department: 'Служба безопасности', phone: '+79995556688', progress: 30, status: 'overdue', enrolledDate: '01.05.2026' },
+      { id: 1004, employeeId: 'emp-4', name: 'Морозова Елена Андреевна', department: 'HR департамент', phone: '+79994445566', progress: 85, status: 'active', enrolledDate: '01.05.2026' },
+    ]
+  },
+  { id: 2, title: 'Вводный курс по 1С', category: 'IT', duration: '4 часа', deadline: '', status: 'active', mandatory: false,
+    enrollments: [
+      { id: 2002, employeeId: 'emp-2', name: 'Сидорова Анна Викторовна', department: 'Финансовый департамент', phone: '+79992223344', progress: 89, status: 'active', enrolledDate: '01.05.2026' },
+      { id: 2004, employeeId: 'emp-4', name: 'Морозова Елена Андреевна', department: 'HR департамент', phone: '+79994445566', progress: 100, status: 'completed', enrolledDate: '01.05.2026' },
+    ]
+  },
+  { id: 3, title: 'Навыки деловой коммуникации', category: 'Soft skills', duration: '3 часа', deadline: '15.07.2026', status: 'active', mandatory: false,
+    enrollments: [
+      { id: 3001, employeeId: 'emp-1', name: 'Иванов Петр Сергеевич', department: 'ИТ и цифровые решения', phone: '+79991112233', progress: 20, status: 'active', enrolledDate: '01.05.2026' },
+      { id: 3002, employeeId: 'emp-2', name: 'Сидорова Анна Викторовна', department: 'Финансовый департамент', phone: '+79992223344', progress: 20, status: 'active', enrolledDate: '01.05.2026' },
+    ]
+  },
+  { id: 4, title: 'Антикоррупционная политика', category: 'Право', duration: '2 часа', deadline: '01.07.2026', status: 'active', mandatory: true,
+    enrollments: [
+      { id: 4001, employeeId: 'emp-1', name: 'Иванов Петр Сергеевич', department: 'ИТ и цифровые решения', phone: '+79991112233', progress: 90, status: 'active', enrolledDate: '01.05.2026' },
+      { id: 4002, employeeId: 'emp-2', name: 'Сидорова Анна Викторовна', department: 'Финансовый департамент', phone: '+79992223344', progress: 100, status: 'completed', enrolledDate: '01.05.2026' },
+      { id: 4003, employeeId: 'emp-3', name: 'Кузнецов Дмитрий Олегович', department: 'Производственный блок', phone: '+79993334455', progress: 90, status: 'active', enrolledDate: '01.05.2026' },
+      { id: 4004, employeeId: 'emp-4', name: 'Морозова Елена Андреевна', department: 'HR департамент', phone: '+79994445566', progress: 100, status: 'completed', enrolledDate: '01.05.2026' },
+    ]
+  },
+  { id: 5, title: 'Управление проектами (Agile)', category: 'Управление', duration: '12 часов', deadline: '', status: 'draft', mandatory: false, enrollments: [] },
+  { id: 6, title: 'Работа с персональными данными', category: 'Право', duration: '2 часа', deadline: '', status: 'archived', mandatory: true,
+    enrollments: [
+      { id: 6001, employeeId: 'emp-1', name: 'Иванов Петр Сергеевич', department: 'ИТ и цифровые решения', phone: '+79991112233', progress: 100, status: 'completed', enrolledDate: '01.04.2026' },
+      { id: 6002, employeeId: 'emp-2', name: 'Сидорова Анна Викторовна', department: 'Финансовый департамент', phone: '+79992223344', progress: 100, status: 'completed', enrolledDate: '01.04.2026' },
+      { id: 6003, employeeId: 'emp-3', name: 'Кузнецов Дмитрий Олегович', department: 'Производственный блок', phone: '+79993334455', progress: 100, status: 'completed', enrolledDate: '01.04.2026' },
+    ]
   },
 ]
 
