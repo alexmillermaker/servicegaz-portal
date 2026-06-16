@@ -280,59 +280,16 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useLearningStore } from '@/store/learning'
+import { useEmployeesStore } from '@/store/employees'
+import type { Course, Enrollment } from '@/store/learning'
 
-interface Enrollment {
-  id: number
-  name: string
-  department: string
-  phone: string
-  progress: number
-  status: 'active' | 'completed' | 'overdue'
-  enrolledDate: string
-}
+const learningStore = useLearningStore()
+const empStore = useEmployeesStore()
+const { courses } = storeToRefs(learningStore)
 
-interface Course {
-  id: number
-  title: string
-  category: string
-  duration: string
-  deadline: string
-  status: 'active' | 'draft' | 'archived'
-  mandatory: boolean
-  enrollments: Enrollment[]
-}
-
-const allEmployees = [
-  { id: 1,  name: 'Иванов Павел',       department: 'IT',            phone: '+7 900 111-11-11' },
-  { id: 2,  name: 'Петрова Анна',       department: 'HR',            phone: '+7 900 222-22-22' },
-  { id: 3,  name: 'Козлов Дмитрий',     department: 'Производство',  phone: '+7 900 333-33-33' },
-  { id: 4,  name: 'Новикова Светлана',  department: 'Бухгалтерия',   phone: '+7 900 444-44-44' },
-  { id: 5,  name: 'Смирнов Кирилл',     department: 'IT',            phone: '+7 900 555-55-55' },
-  { id: 6,  name: 'Волков Денис',       department: 'Продажи',       phone: '+7 900 666-66-66' },
-  { id: 7,  name: 'Карпова Алина',      department: 'HR',            phone: '+7 900 777-77-77' },
-  { id: 8,  name: 'Лебедев Сергей',     department: 'Юридический',   phone: '+7 900 888-88-88' },
-  { id: 9,  name: 'Морозова Екатерина', department: 'Маркетинг',     phone: '+7 900 999-99-99' },
-  { id: 10, name: 'Попов Андрей',       department: 'Производство',  phone: '+7 900 100-10-10' },
-]
-
-function mkEnroll(empId: number, progress: number, status: 'active' | 'completed' | 'overdue'): Enrollment {
-  const emp = allEmployees.find(e => e.id === empId)!
-  return { id: empId * 1000 + Math.floor(Math.random() * 999), name: emp.name, department: emp.department, phone: emp.phone, progress, status, enrolledDate: '01.05.2026' }
-}
-
-const courses = ref<Course[]>([
-  { id: 1, title: 'Промышленная безопасность', category: 'Безопасность', duration: '8 часов', deadline: '30.06.2026', status: 'active', mandatory: true,
-    enrollments: [mkEnroll(1,70,'active'), mkEnroll(3,100,'completed'), mkEnroll(5,30,'overdue'), mkEnroll(7,85,'active'), mkEnroll(9,100,'completed')] },
-  { id: 2, title: 'Вводный курс по 1С', category: 'IT', duration: '4 часа', deadline: '', status: 'active', mandatory: false,
-    enrollments: [mkEnroll(2,89,'active'), mkEnroll(4,100,'completed'), mkEnroll(6,50,'active')] },
-  { id: 3, title: 'Навыки деловой коммуникации', category: 'Soft skills', duration: '3 часа', deadline: '15.07.2026', status: 'active', mandatory: false,
-    enrollments: [mkEnroll(1,20,'active'), mkEnroll(2,20,'active'), mkEnroll(8,15,'overdue')] },
-  { id: 4, title: 'Антикоррупционная политика', category: 'Право', duration: '2 часа', deadline: '01.07.2026', status: 'active', mandatory: true,
-    enrollments: [mkEnroll(1,90,'active'), mkEnroll(2,100,'completed'), mkEnroll(3,90,'active'), mkEnroll(4,100,'completed'), mkEnroll(5,100,'completed')] },
-  { id: 5, title: 'Управление проектами (Agile)', category: 'Управление', duration: '12 часов', deadline: '', status: 'draft', mandatory: false, enrollments: [] },
-  { id: 6, title: 'Работа с персональными данными', category: 'Право', duration: '2 часа', deadline: '', status: 'archived', mandatory: true,
-    enrollments: [mkEnroll(1,100,'completed'), mkEnroll(2,100,'completed'), mkEnroll(3,100,'completed')] },
-])
+const allEmployees = computed(() => empStore.employees.filter(e => e.status !== 'ARCHIVED'))
 
 const categories = ['Безопасность', 'IT', 'Soft skills', 'Право', 'Управление', 'Производство']
 const search = ref('')
@@ -377,9 +334,9 @@ function courseCompletion(course: Course) {
 const availableToAdd = computed(() => {
   if (!selectedCourse.value || !enrollSearch.value.trim()) return []
   const q = enrollSearch.value.toLowerCase()
-  const enrolled = new Set(selectedCourse.value.enrollments.map(e => e.name))
-  return allEmployees.filter(emp =>
-    !enrolled.has(emp.name) &&
+  const enrolledIds = new Set(selectedCourse.value.enrollments.map(e => e.employeeId))
+  return allEmployees.value.filter(emp =>
+    !enrolledIds.has(emp.id) &&
     (emp.name.toLowerCase().includes(q) || emp.department.toLowerCase().includes(q) || emp.phone.includes(q))
   )
 })
@@ -425,11 +382,10 @@ function editCourse(course: Course) {
 function saveCourse() {
   if (!form.title.trim()) return
   if (editingCourse.value) {
-    const c = courses.value.find(c => c.id === editingCourse.value!.id)
-    if (c) Object.assign(c, { title: form.title, category: form.category, duration: form.duration, deadline: form.deadline, status: form.status, mandatory: form.mandatory })
+    learningStore.update(editingCourse.value.id, { title: form.title, category: form.category, duration: form.duration, deadline: form.deadline, status: form.status, mandatory: form.mandatory })
     showToast('Курс обновлён')
   } else {
-    courses.value.push({ id: Date.now(), title: form.title, category: form.category, duration: form.duration, deadline: form.deadline, status: form.status, mandatory: form.mandatory, enrollments: [] })
+    learningStore.add({ title: form.title, category: form.category, duration: form.duration, deadline: form.deadline, status: form.status, mandatory: form.mandatory, enrollments: [] })
     showToast('Курс добавлен')
   }
   showModal.value = false
@@ -442,12 +398,13 @@ function openEnrollments(course: Course) {
   showEnrollments.value = true
 }
 
-function addEnrollment(emp: typeof allEmployees[0]) {
+function addEnrollment(emp: { id: string; name: string; department: string; phone: string }) {
   if (!selectedCourse.value) return
-  selectedCourse.value.enrollments.push({
-    id: Date.now() + Math.random(), name: emp.name, department: emp.department, phone: emp.phone,
+  const enrollment: Enrollment = {
+    id: Date.now(), employeeId: emp.id, name: emp.name, department: emp.department, phone: emp.phone,
     progress: 0, status: 'active', enrolledDate: new Date().toLocaleDateString('ru-RU')
-  })
+  }
+  learningStore.addEnrollment(selectedCourse.value.id, enrollment)
   enrollSearch.value = ''
   showToast(`${emp.name} записан на курс`)
 }
@@ -455,7 +412,7 @@ function addEnrollment(emp: typeof allEmployees[0]) {
 function removeEnrollment(enrollId: number) {
   if (!selectedCourse.value) return
   const name = selectedCourse.value.enrollments.find(e => e.id === enrollId)?.name
-  selectedCourse.value.enrollments = selectedCourse.value.enrollments.filter(e => e.id !== enrollId)
+  learningStore.removeEnrollment(selectedCourse.value.id, enrollId)
   showToast(`${name} отчислен с курса`)
 }
 
@@ -463,7 +420,7 @@ function confirmArchive(course: Course) { archiveTarget.value = course }
 
 function doArchive() {
   if (archiveTarget.value) {
-    archiveTarget.value.status = 'archived'
+    learningStore.archive(archiveTarget.value.id)
     showToast('Курс переведён в архив')
     archiveTarget.value = null
   }

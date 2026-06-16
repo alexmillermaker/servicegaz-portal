@@ -5,9 +5,13 @@ import MobileNavigation from '@/widgets/MobileNavigation.vue'
 import AppPageHeader from '@/shared/ui/AppPageHeader.vue'
 import AppEmptyState from '@/shared/ui/AppEmptyState.vue'
 import { useHaptic } from '@/shared/composables/useHaptic'
+import { useLearningStore } from '@/store/learning'
+import { useAuthStore } from '@/store/auth'
 
 const router = useRouter()
 const haptic = useHaptic()
+const learningStore = useLearningStore()
+const auth = useAuthStore()
 
 type CourseStatus = 'active' | 'completed' | 'overdue'
 
@@ -22,12 +26,10 @@ interface MyCourse {
   status: CourseStatus
 }
 
-const courses = ref<MyCourse[]>([
-  { id: 1, title: 'Промышленная безопасность', category: 'Безопасность', duration: '8 часов', deadline: '30.06.2026', mandatory: true,  progress: 70, status: 'active' },
-  { id: 3, title: 'Навыки деловой коммуникации', category: 'Soft skills',  duration: '3 часа',  deadline: '15.07.2026', mandatory: false, progress: 20, status: 'active' },
-  { id: 4, title: 'Антикоррупционная политика', category: 'Право',        duration: '2 часа',  deadline: '01.07.2026', mandatory: true,  progress: 90, status: 'active' },
-  { id: 6, title: 'Работа с персональными данными', category: 'Право',    duration: '2 часа',  deadline: '—',          mandatory: true,  progress: 100, status: 'completed' },
-])
+const courses = computed<MyCourse[]>(() => {
+  if (!auth.employee?.id) return []
+  return learningStore.getEnrollmentsForEmployee(auth.employee.id)
+})
 
 type Filter = 'all' | 'mandatory' | 'active' | 'completed'
 const filter = ref<Filter>('all')

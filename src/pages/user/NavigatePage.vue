@@ -76,6 +76,8 @@ const allPoints: MapPoint[] = [
   { id: 'hr',           x: 1057, y: 500, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
   // ── Старт ───────────────────────────────────────────────────
   { id: 'start',        x: 951,  y: 522, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
+  // ── Корпус 1, Этаж 2 (кабинеты будут добавлены) ─────────────
+  { id: 'b1f2_start',   x: 596,  y: 421, label: 'Коридор / Лестница',    room: 'Коридор',  category: 'start',    floor: 2, building: 'b1' },
   // ── Коридорные и дверные узлы ────────────────────────────────
   { id: 'start_door',   x: 958,  y: 490, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_right',      x: 959,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
@@ -187,34 +189,125 @@ function selectPoint(id: string) {
   showPointsList.value = false
 }
 
+function defaultStart(bId: string, fId: number): string {
+  if (bId === 'b1' && fId === 2) return 'b1f2_start'
+  return 'start'
+}
 function changeBuilding(b: typeof buildings[0]) {
   selectedBuilding.value = b
+  selectedFloor.value = floors[0]
   showBuildingPicker.value = false
   targetId.value = null
-  startId.value = 'start'
+  startId.value = defaultStart(b.id, floors[0].id)
+  resetVB()
 }
 function changeFloor(f: typeof floors[0]) {
   selectedFloor.value = f
   showFloorPicker.value = false
   targetId.value = null
-  startId.value = 'start'
+  startId.value = defaultStart(selectedBuilding.value.id, f.id)
+  resetVB()
 }
 
 
-const zoom = ref(1)
-function zoomIn()  { zoom.value = Math.min(zoom.value + 0.25, 2.5); haptic.tap() }
-function zoomOut() { zoom.value = Math.max(zoom.value - 0.25, 0.6); haptic.tap() }
+// ── ViewBox-зум: координатное пространство per-floor ──
+const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
+  b1_1: { w: 1190.55, h: 841.89 },
+  b1_2: { w: 1190.55, h: 841.89 },
+}
+const floorDims = computed(() => {
+  const key = `${selectedBuilding.value.id}_${selectedFloor.value.id}`
+  return FLOOR_DIMS[key] ?? { w: 1190.55, h: 841.89 }
+})
+const vbX = ref(0)
+const vbY = ref(0)
+const vbW = ref(1190.55)
+const vbH = ref(841.89)
+const zoom = computed(() => floorDims.value.w / vbW.value)
+const isDragging = ref(false)
+const mapContainerRef = ref<HTMLElement | null>(null)
 
-let pinchStartDist = 0, pinchStartZoom = 1
+const svgViewBox = computed(() => `${vbX.value} ${vbY.value} ${vbW.value} ${vbH.value}`)
+
+function clampVB() {
+  const { w, h } = floorDims.value
+  if (vbX.value < 0) vbX.value = 0
+  if (vbY.value < 0) vbY.value = 0
+  if (vbX.value + vbW.value > w) vbX.value = w - vbW.value
+  if (vbY.value + vbH.value > h) vbY.value = h - vbH.value
+}
+function resetVB() {
+  const { w, h } = floorDims.value
+  vbX.value = 0; vbY.value = 0; vbW.value = w; vbH.value = h
+}
+
 function getPinchDist(e: TouchEvent) {
   const [t1, t2] = [e.touches[0], e.touches[1]]
   return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
 }
-function onMapTouchStart(e: TouchEvent) { if (e.touches.length === 2) { pinchStartDist = getPinchDist(e); pinchStartZoom = zoom.value } }
-function onMapTouchMove(e: TouchEvent) {
-  if (e.touches.length === 2) { e.preventDefault(); zoom.value = Math.min(Math.max(pinchStartZoom * getPinchDist(e) / pinchStartDist, 0.6), 2.5) }
+let pinchStartDist = 0, pinchStartZoom = 1
+
+function zoomAround(newZoom: number, pivotX?: number, pivotY?: number) {
+  const el = mapContainerRef.value
+  if (!el) return
+  const cW = el.clientWidth, cH = el.clientHeight
+  const px = pivotX ?? cW / 2, py = pivotY ?? cH / 2
+  const svgPx = vbX.value + px * vbW.value / cW
+  const svgPy = vbY.value + py * vbH.value / cH
+  const { w, h } = floorDims.value
+  const cz = Math.min(Math.max(newZoom, 0.5), 3)
+  const nW = w / cz, nH = h / cz
+  if (cz <= 1) { resetVB() }
+  else { vbX.value = svgPx - px * nW / cW; vbY.value = svgPy - py * nH / cH; vbW.value = nW; vbH.value = nH; clampVB() }
 }
-function onMapTouchEnd(e: TouchEvent) { if (e.touches.length < 2) pinchStartDist = 0 }
+function zoomIn()  { zoomAround(zoom.value + 0.25); haptic.tap() }
+function zoomOut() { zoomAround(zoom.value - 0.25); haptic.tap() }
+
+// ── Mouse drag ────────────────────────────────────────────────
+let _mp = { x: 0, y: 0 }
+function onMapMouseDown(e: MouseEvent) {
+  if (e.button !== 0) return
+  isDragging.value = true; _mp = { x: e.clientX, y: e.clientY }; e.preventDefault()
+}
+function onMapMouseMove(e: MouseEvent) {
+  if (!isDragging.value) return
+  const el = mapContainerRef.value; if (!el) return
+  const sx = vbW.value / el.clientWidth, sy = vbH.value / el.clientHeight
+  vbX.value -= (e.clientX - _mp.x) * sx; vbY.value -= (e.clientY - _mp.y) * sy
+  clampVB(); _mp = { x: e.clientX, y: e.clientY }
+}
+function onMapMouseUp() { isDragging.value = false }
+
+// ── Touch ─────────────────────────────────────────────────────
+let _tp = { x: 0, y: 0 }, _tDrag = false
+function onMapTouchStart(e: TouchEvent) {
+  if (e.touches.length === 2) {
+    _tDrag = false; pinchStartDist = getPinchDist(e); pinchStartZoom = zoom.value
+  } else if (e.touches.length === 1) {
+    _tDrag = true; _tp = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+}
+function onMapTouchMove(e: TouchEvent) {
+  if (e.touches.length === 2) {
+    _tDrag = false
+    const nz = Math.min(Math.max(pinchStartZoom * getPinchDist(e) / pinchStartDist, 0.5), 3)
+    const [t1, t2] = [e.touches[0], e.touches[1]]
+    const rect = mapContainerRef.value?.getBoundingClientRect()
+    const cx = rect ? (t1.clientX + t2.clientX) / 2 - rect.left : undefined
+    const cy = rect ? (t1.clientY + t2.clientY) / 2 - rect.top  : undefined
+    zoomAround(nz, cx, cy)
+  } else if (e.touches.length === 1 && _tDrag) {
+    const el = mapContainerRef.value; if (!el) return
+    const sx = vbW.value / el.clientWidth, sy = vbH.value / el.clientHeight
+    vbX.value -= (e.touches[0].clientX - _tp.x) * sx
+    vbY.value -= (e.touches[0].clientY - _tp.y) * sy
+    clampVB(); _tp = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+}
+function onMapTouchEnd(e: TouchEvent) {
+  if (e.touches.length < 2) pinchStartDist = 0
+  if (e.touches.length === 0) _tDrag = false
+}
 
 const categoryLabels: Record<string, string> = {
   office: 'Офис', service: 'Медицина', wc: 'Санузел', shower: 'Душевая',
@@ -250,6 +343,8 @@ const hasMapForCurrentView = computed(() =>
   allPoints.some(p => p.floor === selectedFloor.value.id && p.building === selectedBuilding.value.id && p.category !== 'corridor')
 )
 
+const currentMapImage = computed(() => `${import.meta.env.BASE_URL}maps/${selectedBuilding.value.id}_floor${selectedFloor.value.id}.svg`)
+
 function roomFill(id: string, _default: string): string {
   if (targetId.value === id) return 'rgba(59,130,246,0.22)'
   if (startId.value === id) return 'rgba(34,197,94,0.22)'
@@ -278,70 +373,50 @@ function roomStrokeOpacity(id: string): number {
 
     <div class="nav-page__top">
       <h1 class="nav-page__title">Навигация</h1>
-      <div class="nav-page__selectors">
-        <div class="nav-page__select-wrap" @click="showBuildingPicker = !showBuildingPicker; showFloorPicker = false">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-          <div class="nav-page__select-text">
-            <span class="nav-page__select-main">{{ selectedBuilding.label }}</span>
-            <span class="nav-page__select-sub">{{ selectedBuilding.sub }}</span>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div class="nav-page__select-wrap" @click="showFloorPicker = !showFloorPicker; showBuildingPicker = false">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          <div class="nav-page__select-text">
-            <span class="nav-page__select-main">{{ selectedFloor.label }}</span>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <button class="nav-page__points-btn" @click="showPointsList = !showPointsList">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Список
-        </button>
-      </div>
     </div>
 
-    <Transition name="dropdown">
-      <div v-if="showBuildingPicker" class="nav-page__picker">
-        <button v-for="b in buildings" :key="b.id" class="nav-page__picker-item" :class="{ 'is-selected': selectedBuilding.id === b.id }" @click="changeBuilding(b)">
-          <span>{{ b.label }}</span>
-          <span class="nav-page__picker-sub">{{ b.sub }}</span>
-          <svg v-if="selectedBuilding.id === b.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-      </div>
-    </Transition>
-
-    <Transition name="dropdown">
-      <div v-if="showFloorPicker" class="nav-page__picker">
-        <button v-for="f in floors" :key="f.id" class="nav-page__picker-item" :class="{ 'is-selected': selectedFloor.id === f.id }" @click="changeFloor(f)">
-          <span>{{ f.label }}</span>
-          <svg v-if="selectedFloor.id === f.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-      </div>
-    </Transition>
+    <div class="nav-page__buildings">
+      <button
+        v-for="b in buildings" :key="b.id"
+        class="nav-page__bchip"
+        :class="{ 'is-active': selectedBuilding.id === b.id }"
+        @click="changeBuilding(b)"
+      >
+        <span class="nav-page__bchip-label">{{ b.label }}</span>
+        <span class="nav-page__bchip-sub">{{ b.sub }}</span>
+      </button>
+    </div>
 
     <!-- Карта -->
-    <div class="nav-page__map-container" @touchstart="onMapTouchStart" @touchmove.prevent="onMapTouchMove" @touchend="onMapTouchEnd">
+    <div class="nav-page__map-container"
+      ref="mapContainerRef"
+      :class="{ 'is-dragging': isDragging }"
+      @mousedown="onMapMouseDown" @mousemove="onMapMouseMove" @mouseup="onMapMouseUp" @mouseleave="onMapMouseUp"
+      @touchstart="onMapTouchStart" @touchmove.prevent="onMapTouchMove" @touchend="onMapTouchEnd"
+    >
+
+      <!-- Floor pills (left overlay) -->
+      <div class="nav-page__floors" @mousedown.stop @touchstart.stop>
+        <button
+          v-for="f in floors" :key="f.id"
+          class="nav-page__fpill"
+          :class="{ 'is-active': selectedFloor.id === f.id }"
+          @click="changeFloor(f)"
+        >{{ f.id }}</button>
+      </div>
 
       <div v-if="!hasMapForCurrentView" class="nav-page__no-map">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
         <p>Схема для {{ selectedBuilding.label }}, {{ selectedFloor.label }} пока не загружена</p>
       </div>
 
-      <div v-else class="nav-page__map-inner" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top center' }">
-        <!--
-          ViewBox 420 × 270
-          Верхний ряд: y=10..110   Коридор: y=110..148   Нижний ряд: y=148..258
-        -->
-        <svg viewBox="0 0 1190.55 841.89" class="nav-page__svg" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="rgba(0,0,0,0.13)"/>
-            </filter>
-          </defs>
+      <div v-else class="nav-page__map-inner">
+        <svg :viewBox="svgViewBox" class="nav-page__svg" xmlns="http://www.w3.org/2000/svg">
+          <!-- Архитектурный план (фон) — рендерится в натуральном разрешении через viewBox -->
+          <image :href="currentMapImage" x="0" y="0" :width="floorDims.w" :height="floorDims.h"/>
 
-          <!-- Архитектурный план (фон) -->
-          <image href="/maps/b1_floor1.svg" x="0" y="0" width="1190.55" height="841.89"/>
+          <!-- ═══ КОРПУС 1 · ЭТАЖ 1 ═══ -->
+          <template v-if="selectedBuilding.id === 'b1' && selectedFloor.id === 1">
 
           <!-- ═══ ВЕРХНИЙ РЯД ═══ -->
 
@@ -469,6 +544,14 @@ function roomStrokeOpacity(id: string): number {
           <!-- ═══ КОРИДОР ═══ -->
           <text x="580" y="415" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" letter-spacing="8" style="pointer-events:none">К О Р И Д О Р</text>
 
+          </template>
+          <!-- ═══ КОНЕЦ ЭТАЖ 1 ═══ -->
+
+          <!-- ═══ КОРПУС 1 · ЭТАЖ 2 (кабинеты будут добавлены) ═══ -->
+          <template v-if="selectedBuilding.id === 'b1' && selectedFloor.id === 2">
+            <!-- помещения появятся после загрузки плана -->
+          </template>
+
           <!-- ═══ МАРШРУТ ═══ -->
           <path v-if="routePath.length > 1"
             :d="svgRoutePath()"
@@ -478,10 +561,12 @@ function roomStrokeOpacity(id: string): number {
           />
 
           <!-- ═══ МАРКЕР СТАРТА ═══ -->
-          <circle :cx="startPoint!.x" :cy="startPoint!.y" r="20" fill="#0079C2" stroke="white" stroke-width="4"/>
-          <circle :cx="startPoint!.x" :cy="startPoint!.y" r="8"  fill="white"/>
-          <rect :x="startPoint!.x - 42" :y="startPoint!.y - 50" width="84" height="28" rx="14" fill="white" stroke="#c8d5e8" stroke-width="1.5"/>
-          <text :x="startPoint!.x" :y="startPoint!.y - 30" text-anchor="middle" font-size="17" fill="#0079C2" font-family="sans-serif" font-weight="700" style="pointer-events:none">Старт</text>
+          <template v-if="startPoint">
+            <circle :cx="startPoint.x" :cy="startPoint.y" r="20" fill="#0079C2" stroke="white" stroke-width="4"/>
+            <circle :cx="startPoint.x" :cy="startPoint.y" r="8"  fill="white"/>
+            <rect :x="startPoint.x - 42" :y="startPoint.y - 50" width="84" height="28" rx="14" fill="white" stroke="#c8d5e8" stroke-width="1.5"/>
+            <text :x="startPoint.x" :y="startPoint.y - 30" text-anchor="middle" font-size="17" fill="#0079C2" font-family="sans-serif" font-weight="700" style="pointer-events:none">Старт</text>
+          </template>
 
           <!-- ═══ МАРКЕР ЦЕЛИ ═══ -->
           <template v-if="targetPoint">
@@ -497,11 +582,18 @@ function roomStrokeOpacity(id: string): number {
       </div>
 
       <!-- Zoom -->
-      <div class="nav-page__zoom">
+      <div class="nav-page__zoom" @mousedown.stop @touchstart.stop>
         <button class="nav-page__zoom-btn" @click="zoomIn"  :disabled="zoom >= 2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="nav-page__zoom-sep" />
         <button class="nav-page__zoom-btn" @click="zoomOut" :disabled="zoom <= 0.6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
+    </div>
+
+    <div class="nav-page__below-map">
+      <button class="nav-page__points-btn" @click="showPointsList = !showPointsList">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Список помещений
+      </button>
     </div>
 
     <!-- Информация о маршруте -->
@@ -611,38 +703,61 @@ function roomStrokeOpacity(id: string): number {
 .nav-page { background: var(--c-bg); min-height: 100dvh; }
 
 .nav-page__top { padding: var(--gap-md) var(--gap-md) var(--gap-sm); }
-.nav-page__title { font-size: var(--fs-xl); font-weight: 700; margin-bottom: var(--gap-md); }
+.nav-page__title { font-size: var(--fs-xl); font-weight: 700; margin-bottom: var(--gap-sm); }
 
-.nav-page__selectors { display: flex; gap: var(--gap-sm); align-items: stretch; }
-
-.nav-page__select-wrap {
-  display: flex; align-items: center; gap: var(--gap-sm);
-  padding: 0 12px; min-height: var(--touch-min);
-  background: var(--c-surface); border: 1.5px solid var(--c-border);
-  border-radius: var(--r-lg); cursor: pointer; flex: 1; min-width: 0;
-  transition: border-color var(--dur-fast), background var(--dur-fast);
-  user-select: none;
+/* Buildings chips */
+.nav-page__buildings {
+  display: flex; gap: 8px;
+  padding: 0 var(--gap-md) var(--gap-sm);
+  overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-.nav-page__select-wrap:active { border-color: var(--c-accent); background: var(--c-accent-dim); }
-.nav-page__select-text { flex: 1; min-width: 0; }
-.nav-page__select-main { display: block; font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.nav-page__select-sub  { display: block; font-size: 10px; color: var(--c-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-page__buildings::-webkit-scrollbar { display: none; }
+.nav-page__bchip {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 1px; padding: 8px 14px; border-radius: var(--r-lg);
+  border: 1.5px solid var(--c-border); background: var(--c-surface);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font-body); min-height: var(--touch-min);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.nav-page__bchip.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.nav-page__bchip-label { font-size: var(--fs-sm); font-weight: 600; display: block; }
+.nav-page__bchip-sub { font-size: 10px; display: block; opacity: .7; }
 
+/* Floor pills (left overlay) */
+.nav-page__floors {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 5px; z-index: 10;
+}
+.nav-page__fpill {
+  width: 38px; height: 38px; border-radius: var(--r-md);
+  border: 1.5px solid rgba(200,215,232,.5);
+  background: rgba(255,255,255,.35);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-body); font-size: var(--fs-sm); font-weight: 700;
+  cursor: pointer; color: var(--c-text-1);
+  transition: background .2s, border-color .2s, color .2s, opacity .2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.45;
+}
+.nav-page__fpill:hover { opacity: 1; }
+.nav-page__fpill.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; opacity: 1; box-shadow: 0 2px 8px rgba(8,116,186,.35); }
+
+/* Points list button (below map) */
+.nav-page__below-map { margin: var(--gap-sm) var(--gap-md) 0; }
 .nav-page__points-btn {
-  display: flex; align-items: center; gap: 5px; padding: 0 10px;
-  min-height: var(--touch-min); background: var(--c-surface);
-  border: 1.5px solid var(--c-border); border-radius: var(--r-lg);
-  font-size: var(--fs-xs); font-weight: 600; color: var(--c-text-2);
-  font-family: var(--font-body); cursor: pointer; white-space: nowrap;
-  transition: border-color var(--dur-fast), background var(--dur-fast);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; height: 40px;
+  background: var(--c-surface); border: 1.5px solid var(--c-border);
+  border-radius: var(--r-lg); font-size: var(--fs-xs); font-weight: 600;
+  color: var(--c-text-2); font-family: var(--font-body); cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
 }
 .nav-page__points-btn:active { background: var(--c-accent-dim); border-color: var(--c-accent); color: var(--c-accent); }
 
-.nav-page__picker {
-  margin: 0 var(--gap-md); background: var(--c-surface);
-  border: 1.5px solid var(--c-border); border-radius: var(--r-lg);
-  overflow: hidden; box-shadow: var(--shadow-md); z-index: 20; position: relative;
-}
+/* placeholder for removed picker — kept for structural clarity */
 .nav-page__picker-item {
   display: flex; align-items: center; gap: var(--gap-sm);
   padding: 12px var(--gap-md); font-size: var(--fs-sm); font-weight: 500;
@@ -661,37 +776,42 @@ function roomStrokeOpacity(id: string): number {
   background: var(--c-surface); border: 1px solid var(--c-border);
   border-radius: var(--r-xl); overflow: hidden; position: relative;
   box-shadow: var(--shadow-sm);
+  cursor: grab; user-select: none;
+  aspect-ratio: 1190.55 / 841.89;
 }
+.nav-page__map-container.is-dragging { cursor: grabbing; }
 .nav-page__no-map {
   display: flex; flex-direction: column; align-items: center; gap: var(--gap-sm);
   padding: var(--gap-xl) var(--gap-md); color: var(--c-text-3); text-align: center;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-sm); height: 100%; box-sizing: border-box; justify-content: center;
 }
-.nav-page__map-inner { transition: transform 0.25s var(--ease-out); transform-origin: top center; }
-.nav-page__svg { width: 100%; display: block; touch-action: pan-x pan-y; }
+.nav-page__map-inner { height: 100%; }
+.nav-page__svg { width: 100%; height: 100%; display: block; touch-action: none; }
 
 .route-anim { animation: dashFlow 1.5s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -18; } }
 .pulse-anim { animation: pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-/* Zoom */
+/* Zoom (bottom-right overlay) */
 .nav-page__zoom {
-  position: absolute; top: 10px; left: 10px;
-  background: var(--c-surface); border: 1px solid var(--c-border);
-  border-radius: var(--r-md); box-shadow: var(--shadow-sm);
+  position: absolute; bottom: 10px; right: 10px;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(200,215,232,.85);
+  border-radius: var(--r-md); box-shadow: 0 2px 6px rgba(0,0,0,.12);
   display: flex; flex-direction: column; overflow: hidden;
 }
 .nav-page__zoom-btn {
-  width: var(--touch-min); height: var(--touch-min);
+  width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--c-text-2); background: transparent;
+  cursor: pointer; color: var(--c-text-1); background: transparent;
   border: none; font-family: inherit;
-  transition: background var(--dur-fast), transform var(--dur-fast);
+  transition: background var(--dur-fast);
 }
-.nav-page__zoom-btn:active:not(:disabled) { background: var(--c-bg-2); transform: scale(0.85); }
-.nav-page__zoom-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.nav-page__zoom-sep { height: 1px; background: var(--c-border); }
+.nav-page__zoom-btn:active:not(:disabled) { background: var(--c-accent-dim); }
+.nav-page__zoom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-page__zoom-sep { height: 1px; background: rgba(200,215,232,.85); }
 
 /* Инфо маршрута */
 .nav-page__route-info { padding: var(--gap-sm) var(--gap-md) 0; display: flex; flex-direction: column; gap: var(--gap-sm); }

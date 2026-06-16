@@ -204,23 +204,19 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
 import { useEmployeesStore } from '@/store/employees'
+import { useEventsStore } from '@/store/events'
+import type { CalEvent, EventType } from '@/store/events'
 
-interface Event { id: number; title: string; date: string; day: string; month: string; time: string; type: string; status: string; location: string; participants: number; description: string; dateObj: Date; visibility: 'all' | 'departments' | 'people'; audience: string[] }
+type AdminEvent = CalEvent & { day: string; month: string; dateObj: Date }
 
-function makeEvent(id: number, title: string, dateStr: string, time: string, type: string, status: string, location: string, participants: number, desc: string): Event {
-  const [y, m, d] = dateStr.split('-').map(Number)
+function enrichEvent(e: CalEvent): AdminEvent {
+  const [y, m, d] = e.date.split('-').map(Number)
   const dt = new Date(y, m - 1, d)
-  return { id, title, date: dateStr, day: String(d).padStart(2, '0'), month: dt.toLocaleString('ru', { month: 'short' }), time, type, status, location, participants, description: desc, dateObj: dt, visibility: 'all', audience: [] }
+  return { ...e, day: String(d).padStart(2, '0'), month: dt.toLocaleString('ru', { month: 'short' }), dateObj: dt }
 }
 
-const events = ref<Event[]>([
-  makeEvent(1, 'Еженедельная планёрка HR', '2026-06-09', '10:00', 'meeting', 'upcoming', 'Переговорная №2', 8, ''),
-  makeEvent(2, 'Летний корпоратив', '2026-06-21', '16:00', 'corporate', 'upcoming', 'Загородная база', 45, ''),
-  makeEvent(3, 'Курс по промышленной безопасности', '2026-06-15', '09:00', 'training', 'upcoming', 'Учебный центр', 20, ''),
-  makeEvent(4, 'Сдача квартального отчёта', '2026-06-30', '18:00', 'deadline', 'upcoming', 'Онлайн', 5, ''),
-  makeEvent(5, 'Стратегическая сессия', '2026-06-05', '14:00', 'meeting', 'past', 'Конференц-зал', 15, ''),
-  makeEvent(6, 'Тренинг по продажам', '2026-05-28', '10:00', 'training', 'past', 'Зал А', 12, ''),
-])
+const eventsStore = useEventsStore()
+const events = computed<AdminEvent[]>(() => eventsStore.items.map(enrichEvent))
 
 const empStore = useEmployeesStore()
 const allDepts = computed(() => [...new Set(empStore.employees.map(e => e.department).filter(Boolean))].sort() as string[])
@@ -242,8 +238,8 @@ const search = ref('')
 const filterType = ref('')
 const filterStatus = ref('')
 const showModal = ref(false)
-const editingEvent = ref<Event | null>(null)
-const form = reactive({ title: '', date: '', time: '10:00', type: 'meeting', location: '', participants: 10, description: '', visibility: 'all' as 'all' | 'departments' | 'people', audience: [] as string[] })
+const editingEvent = ref<AdminEvent | null>(null)
+const form = reactive({ title: '', date: '', time: '10:00', type: 'meeting' as EventType, location: '', participants: 10, description: '', visibility: 'all' as 'all' | 'departments' | 'people', audience: [] as string[] })
 
 const calYear = ref(2026)
 const calMonth = ref(5)
@@ -257,7 +253,7 @@ const calCells = computed(() => {
   let startDow = first.getDay(); if (startDow === 0) startDow = 7
   const daysInMonth = new Date(calYear.value, calMonth.value + 1, 0).getDate()
   const today = new Date(); today.setHours(0,0,0,0)
-  const cells = []
+  const cells: { key: string; day: number; isToday: boolean; events: AdminEvent[] }[] = []
   for (let i = 1; i < startDow; i++) cells.push({ key: `e${i}`, day: 0, isToday: false, events: [] })
   for (let d = 1; d <= daysInMonth; d++) {
     const dt = new Date(calYear.value, calMonth.value, d)
@@ -276,32 +272,36 @@ const filtered = computed(() => {
   return list
 })
 
-function typeColor(t: string) { return { meeting: '#0079C2', training: '#8b5cf6', corporate: '#22c55e', deadline: '#ef4444' }[t] ?? '#6b7280' }
-function typeLabel(t: string) { return { meeting: 'Совещание', training: 'Обучение', corporate: 'Корпоратив', deadline: 'Дедлайн' }[t] ?? t }
-function statusLabel(s: string) { return { upcoming: 'Предстоит', ongoing: 'Идёт', past: 'Прошло' }[s] ?? s }
+function typeColor(t: string) { return ({ meeting: '#0079C2', training: '#8b5cf6', corporate: '#22c55e', deadline: '#ef4444' } as Record<string,string>)[t] ?? '#6b7280' }
+function typeLabel(t: string) { return ({ meeting: 'Совещание', training: 'Обучение', corporate: 'Корпоратив', deadline: 'Дедлайн' } as Record<string,string>)[t] ?? t }
+function statusLabel(s: string) { return ({ upcoming: 'Предстоит', ongoing: 'Идёт', past: 'Прошло' } as Record<string,string>)[s] ?? s }
 
 function openCreate() { editingEvent.value = null; audienceSearch.value = ''; Object.assign(form, { title: '', date: '', time: '10:00', type: 'meeting', location: '', participants: 10, description: '', visibility: 'all', audience: [] }); showModal.value = true }
-function editEvent(ev: Event) { editingEvent.value = ev; audienceSearch.value = ''; Object.assign(form, { title: ev.title, date: ev.date, time: ev.time, type: ev.type, location: ev.location, participants: ev.participants, description: ev.description, visibility: ev.visibility, audience: [...ev.audience] }); showModal.value = true }
+function editEvent(ev: AdminEvent) { editingEvent.value = ev; audienceSearch.value = ''; Object.assign(form, { title: ev.title, date: ev.date, time: ev.time, type: ev.type, location: ev.location, participants: ev.participants, description: ev.description, visibility: ev.visibility, audience: [...ev.audience] }); showModal.value = true }
+
 function saveEvent() {
   if (!form.title.trim() || !form.date) return
-  const [y, m, d] = form.date.split('-').map(Number)
-  const dt = new Date(y, m - 1, d)
-  const newEv: Event = { id: editingEvent.value?.id ?? Date.now(), title: form.title, date: form.date, day: String(d).padStart(2,'0'), month: dt.toLocaleString('ru', { month: 'short' }), time: form.time, type: form.type, status: 'upcoming', location: form.location, participants: form.participants, description: form.description, dateObj: dt, visibility: form.visibility, audience: [...form.audience] }
+  const patch: Partial<CalEvent> = {
+    title: form.title, date: form.date, time: form.time,
+    type: form.type, location: form.location,
+    participants: form.participants, description: form.description,
+    visibility: form.visibility, audience: [...form.audience],
+  }
   if (editingEvent.value) {
-    const idx = events.value.findIndex(e => e.id === editingEvent.value!.id)
-    if (idx !== -1) events.value[idx] = newEv
+    eventsStore.update(editingEvent.value.id, patch)
   } else {
-    events.value.push(newEv)
+    eventsStore.add({ ...patch, status: 'upcoming', participantNames: [] } as Omit<CalEvent, 'id'>)
   }
   showModal.value = false
 }
+
 const deleteTarget = ref<number | null>(null)
 const toast = ref('')
 function showToast(msg: string) { toast.value = msg; setTimeout(() => toast.value = '', 2500) }
 function deleteEvent(id: number) { deleteTarget.value = id }
 function doDeleteEvent() {
   if (deleteTarget.value !== null) {
-    events.value = events.value.filter(e => e.id !== deleteTarget.value)
+    eventsStore.remove(deleteTarget.value)
     deleteTarget.value = null
     showToast('Событие удалено')
   }

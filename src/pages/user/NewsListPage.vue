@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
-import { fetchNews } from '@/api/mockClient'
-import type { NewsItem } from '@/api/mockData'
+import { ref, computed, nextTick } from 'vue'
+import { useNewsStore } from '@/store/news'
+import type { NewsItem } from '@/store/news'
 import MobileNavigation from '@/widgets/MobileNavigation.vue'
 import AppPageHeader from '@/shared/ui/AppPageHeader.vue'
 import AppEmptyState from '@/shared/ui/AppEmptyState.vue'
@@ -17,7 +17,8 @@ const swipe = useSwipeDismiss(() => closeModal())
 const { unreadCount } = useNotifications()
 const showNotifications = ref(false)
 
-const news = ref<NewsItem[]>([])
+const newsStore = useNewsStore()
+const news = computed(() => newsStore.published)
 const loading = ref(false)
 const refreshing = ref(false)
 const activeFilter = ref('Все')
@@ -32,22 +33,14 @@ const filteredNews = computed(() => {
   return news.value.filter(n => n.category === activeFilter.value)
 })
 
-async function loadNews() {
-  loading.value = true
-  news.value = await fetchNews()
-  loading.value = false
-}
-
 async function pullRefresh() {
   if (refreshing.value) return
   refreshing.value = true
   haptic.light()
-  news.value = await fetchNews()
+  await new Promise(r => setTimeout(r, 400))
   refreshing.value = false
   haptic.success()
 }
-
-onMounted(loadNews)
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })

@@ -119,12 +119,15 @@
             <div class="form-row-2">
               <div>
                 <label class="form-label">Сотрудник</label>
-                <input v-model="form.employee" class="form-input" placeholder="Иванов Иван Иванович" />
+                <select v-model="form.employeeId" class="form-input" @change="onEmployeeChange">
+                  <option value="">— Выберите сотрудника —</option>
+                  <option v-for="emp in activeEmployees" :key="emp.id" :value="emp.id">{{ emp.name }}</option>
+                </select>
               </div>
               <div>
                 <label class="form-label">Отдел</label>
                 <select v-model="form.department" class="form-input">
-                  <option>IT</option><option>HR</option><option>Производство</option><option>Бухгалтерия</option><option>Продажи</option>
+                  <option v-for="d in [...new Set(activeEmployees.map(e => e.department))]" :key="d" :value="d">{{ d }}</option>
                 </select>
               </div>
             </div>
@@ -186,21 +189,26 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAdaptationStore } from '@/store/adaptation'
+import { useEmployeesStore } from '@/store/employees'
+import type { AdaptPlan, AdaptTask } from '@/store/adaptation'
 
-interface Task { label: string; done: boolean }
-interface Plan { id: number; employee: string; department: string; position: string; programName: string; progress: number; status: 'active'|'completed'|'overdue'; startDate: string; deadline: string; mentor: string; tasks: Task[] }
+const adaptStore = useAdaptationStore()
+const empStore = useEmployeesStore()
+const { plans } = storeToRefs(adaptStore)
 
-const plans = ref<Plan[]>([
-  { id: 1, employee: 'Иванов Павел', department: 'IT', position: 'Разработчик', programName: 'Онбординг разработчика', progress: 65, status: 'active', startDate: '12.05.2026', deadline: '12.07.2026', mentor: 'Смирнов К.Д.', tasks: [{ label: 'Знакомство с командой', done: true }, { label: 'Настройка рабочей среды', done: true }, { label: 'Изучение архитектуры', done: false }, { label: 'Первый pull request', done: false }] },
-  { id: 2, employee: 'Петрова Анна', department: 'HR', position: 'Рекрутер', programName: 'Онбординг HR-специалиста', progress: 100, status: 'completed', startDate: '01.04.2026', deadline: '01.06.2026', mentor: 'Карпова А.В.', tasks: [{ label: 'Знакомство с процессами', done: true }, { label: 'Изучение CRM', done: true }, { label: 'Первый самостоятельный найм', done: true }, { label: 'Аттестация', done: true }] },
-  { id: 3, employee: 'Козлов Дмитрий', department: 'Производство', position: 'Инженер', programName: 'Адаптация инженера', progress: 30, status: 'overdue', startDate: '01.03.2026', deadline: '01.05.2026', mentor: 'Волков Д.Р.', tasks: [{ label: 'Инструктаж по ОТ и ТБ', done: true }, { label: 'Изучение регламентов', done: false }, { label: 'Работа под наблюдением', done: false }, { label: 'Самостоятельная смена', done: false }] },
-  { id: 4, employee: 'Новикова Светлана', department: 'Бухгалтерия', position: 'Бухгалтер', programName: 'Онбординг бухгалтера', progress: 45, status: 'active', startDate: '20.05.2026', deadline: '20.07.2026', mentor: 'Карпова А.В.', tasks: [{ label: 'Знакомство с 1С', done: true }, { label: 'Изучение учётной политики', done: true }, { label: 'Первичная документация', done: false }, { label: 'Отчётный период', done: false }] },
-])
+const activeEmployees = computed(() => empStore.employees.filter(e => e.status !== 'ARCHIVED' && e.status !== 'BLOCKED'))
 
 const search = ref(''); const filterStatus = ref(''); const filterDept = ref('')
-const showModal = ref(false); const editingPlan = ref<Plan | null>(null)
+const showModal = ref(false); const editingPlan = ref<AdaptPlan | null>(null)
 const toastMsg = ref('')
-const form = reactive({ employee: '', department: 'IT', position: '', mentor: '', programName: 'Онбординг разработчика', startDate: '', deadline: '', tasks: [] as Task[] })
+const form = reactive({ employeeId: '', employee: '', department: '', position: '', mentor: '', programName: 'Онбординг разработчика', startDate: '', deadline: '', tasks: [] as AdaptTask[] })
+
+function onEmployeeChange() {
+  const emp = empStore.employees.find(e => e.id === form.employeeId)
+  if (emp) { form.employee = emp.name; form.department = emp.department; form.position = emp.position }
+}
 
 const depts = computed(() => [...new Set(plans.value.map(p => p.department))])
 const activePlans = computed(() => plans.value.filter(p => p.status === 'active').length)
@@ -220,14 +228,14 @@ function openCreate() {
   editingPlan.value = null
   const today = new Date().toISOString().split('T')[0]
   const deadline = new Date(Date.now() + 60*24*60*60*1000).toISOString().split('T')[0]
-  Object.assign(form, { employee: '', department: 'IT', position: '', mentor: '', programName: 'Онбординг разработчика', startDate: today, deadline, tasks: [{ label: 'Знакомство с командой', done: false }, { label: 'Изучение процессов', done: false }] })
+  Object.assign(form, { employeeId: '', employee: '', department: '', position: '', mentor: '', programName: 'Онбординг разработчика', startDate: today, deadline, tasks: [{ label: 'Знакомство с командой', done: false }, { label: 'Изучение процессов', done: false }] })
   showModal.value = true
 }
 
-function openEdit(plan: Plan) {
+function openEdit(plan: AdaptPlan) {
   editingPlan.value = plan
-  const fmt = (s: string) => { const [d,m,y] = s.split('.'); return `${y}-${m}-${d}` }
-  Object.assign(form, { employee: plan.employee, department: plan.department, position: plan.position, mentor: plan.mentor, programName: plan.programName, startDate: fmt(plan.startDate), deadline: fmt(plan.deadline), tasks: plan.tasks.map(t => ({ ...t })) })
+  const fmt = (s: string) => { if (!s || s === '—') return ''; const [d,m,y] = s.split('.'); return `${y}-${m}-${d}` }
+  Object.assign(form, { employeeId: plan.employeeId, employee: plan.employee, department: plan.department, position: plan.position, mentor: plan.mentor, programName: plan.programName, startDate: fmt(plan.startDate), deadline: fmt(plan.deadline), tasks: plan.tasks.map(t => ({ ...t })) })
   showModal.value = true
 }
 
@@ -241,20 +249,18 @@ function savePlan() {
   const progress = tasks.length ? Math.round(done / tasks.length * 100) : 0
 
   if (editingPlan.value) {
-    const p = plans.value.find(p => p.id === editingPlan.value!.id)
-    if (p) Object.assign(p, { employee: form.employee, department: form.department, position: form.position, mentor: form.mentor, programName: form.programName, startDate: fmtDate(form.startDate), deadline: fmtDate(form.deadline), tasks, progress })
+    adaptStore.update(editingPlan.value.id, { employeeId: form.employeeId, employee: form.employee, department: form.department, position: form.position, mentor: form.mentor, programName: form.programName, startDate: fmtDate(form.startDate), deadline: fmtDate(form.deadline), tasks, progress })
     showToast('Программа обновлена')
   } else {
-    plans.value.unshift({ id: Date.now(), employee: form.employee, department: form.department, position: form.position, mentor: form.mentor, programName: form.programName, startDate: fmtDate(form.startDate), deadline: fmtDate(form.deadline), tasks, progress, status: 'active' })
+    adaptStore.add({ employeeId: form.employeeId, employee: form.employee, department: form.department, position: form.position, mentor: form.mentor, programName: form.programName, startDate: fmtDate(form.startDate), deadline: fmtDate(form.deadline), tasks, progress, status: 'active' })
     showToast('Программа создана')
   }
   showModal.value = false
 }
 
-function toggleComplete(plan: Plan) {
-  plan.status = plan.status === 'completed' ? 'active' : 'completed'
-  if (plan.status === 'completed') { plan.progress = 100; plan.tasks.forEach(t => t.done = true) }
-  showToast(plan.status === 'completed' ? 'Программа завершена' : 'Программа возобновлена')
+function toggleComplete(plan: AdaptPlan) {
+  adaptStore.toggleComplete(plan.id)
+  showToast(plan.status === 'active' ? 'Программа завершена' : 'Программа возобновлена')
 }
 
 function showToast(msg: string) { toastMsg.value = msg; setTimeout(() => toastMsg.value = '', 2500) }

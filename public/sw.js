@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unitorg-sg-v3'
+const CACHE_NAME = 'unitorg-sg-v8'
 const BASE = '/servicegaz-portal'
 const STATIC_ASSETS = [
   BASE + '/',
@@ -24,7 +24,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch: network-first for API/HTML, cache-first for assets
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -42,6 +42,22 @@ self.addEventListener('fetch', (event) => {
           return res
         })
         .catch(() => caches.match(BASE + '/'))
+    )
+    return
+  }
+
+  // Map SVG files: network-first so floor plan changes are always live
+  if (url.pathname.includes('/maps/')) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE_NAME).then((c) => c.put(request, clone))
+          }
+          return res
+        })
+        .catch(() => caches.match(request))
     )
     return
   }

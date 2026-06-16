@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useEmployeesStore } from '@/store/employees'
 import { onboardingTasks } from '@/api/mockData'
 import { saveOnboardingProgress } from '@/api/mockClient'
 import MobileNavigation from '@/widgets/MobileNavigation.vue'
@@ -13,6 +14,7 @@ import { useNotifications } from '@/shared/composables/useNotifications'
 
 const router = useRouter()
 const auth = useAuthStore()
+const empStore = useEmployeesStore()
 const toast = useToast()
 const haptic = useHaptic()
 const { unreadCount } = useNotifications()
@@ -72,14 +74,23 @@ const showLogoutConfirm = ref(false)
 function confirmLogout() { showLogoutConfirm.value = true }
 function doLogout() { showLogoutConfirm.value = false; auth.logout(); router.push('/auth/phone') }
 
-const quickContacts = [
-  { initials: 'РУК', label: 'Руководитель',    role: 'Прямой контакт', color: '#dbeafe', name: 'Андрей Викторович Петров',   email: 'a.petrov@servicegaz.ru',    phone: '+7 (351) 123-45-01' },
-  { initials: 'IT',  label: 'Служба поддержки', role: 'IT-поддержка',   color: '#d1fae5', name: 'Служба технической поддержки', email: 'it@servicegaz.ru',           phone: '+7 (351) 123-45-02' },
-  { initials: 'ОТ',  label: 'Охрана труда',     role: 'Специалист',     color: '#fee2e2', name: 'Наталья Сергеевна Громова',  email: 'n.gromova@servicegaz.ru',   phone: '+7 (351) 123-45-03' },
-  { initials: 'HR',  label: 'HR-отдел',         role: 'Кадры',          color: '#ede9fe', name: 'Карина Александровна Белова', email: 'hr@servicegaz.ru',           phone: '+7 (351) 123-45-04' },
-]
-const activeContact = ref<typeof quickContacts[0] | null>(null)
-function openContact(c: typeof quickContacts[0]) { haptic.tap(); activeContact.value = c }
+interface QuickContact { initials: string; label: string; role: string; color: string; name: string; email: string; phone: string }
+
+const quickContacts = computed<QuickContact[]>(() => {
+  const emps = empStore.employees
+  const ruk = emps.find(e => e.role === 'HR' && e.position.toLowerCase().includes('директор'))
+  const it  = emps.find(e => e.department === 'ИТ и цифровые решения' && e.id !== auth.employee?.id)
+  const ot  = emps.find(e => e.department === 'Служба безопасности')
+  const hr  = emps.find(e => e.department === 'HR департамент')
+  return [
+    { initials: 'РУК', label: 'Руководитель',    role: 'Прямой контакт', color: '#dbeafe', name: ruk?.name ?? 'Андрей Викторович Петров',   email: ruk?.email ?? 'a.petrov@servicegaz.ru',  phone: ruk?.phone ?? '+7 (351) 123-45-01' },
+    { initials: 'IT',  label: 'Служба поддержки', role: 'IT-поддержка',   color: '#d1fae5', name: it?.name  ?? 'Служба технической поддержки', email: it?.email  ?? 'it@servicegaz.ru',         phone: it?.phone  ?? '+7 (351) 123-45-02' },
+    { initials: 'ОТ',  label: 'Охрана труда',     role: 'Специалист',     color: '#fee2e2', name: ot?.name  ?? 'Наталья Сергеевна Громова',   email: ot?.email  ?? 'n.gromova@servicegaz.ru', phone: ot?.phone  ?? '+7 (351) 123-45-03' },
+    { initials: 'HR',  label: 'HR-отдел',         role: 'Кадры',          color: '#ede9fe', name: hr?.name  ?? 'Карина Александровна Белова',  email: hr?.email  ?? 'hr@servicegaz.ru',         phone: hr?.phone  ?? '+7 (351) 123-45-04' },
+  ]
+})
+const activeContact = ref<QuickContact | null>(null)
+function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
 </script>
 
 <template>

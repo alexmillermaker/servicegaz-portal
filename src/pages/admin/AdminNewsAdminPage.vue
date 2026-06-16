@@ -39,7 +39,7 @@
         <div class="news-card__body">
           <span class="news-card__category">{{ item.category }}</span>
           <h3 class="news-card__title">{{ item.title }}</h3>
-          <p class="news-card__excerpt">{{ item.excerpt }}</p>
+          <p class="news-card__excerpt">{{ item.teaser }}</p>
           <div class="news-card__meta">
             <span class="news-card__author">{{ item.author }}</span>
             <span class="news-card__date">{{ item.date }}</span>
@@ -87,7 +87,7 @@
               <option>Объявления</option><option>HR</option><option>Компания</option><option>Обучение</option>
             </select>
             <label class="form-label">Анонс</label>
-            <textarea v-model="form.excerpt" class="form-input form-textarea" placeholder="Краткое описание…" rows="3" />
+            <textarea v-model="form.teaser" class="form-input form-textarea" placeholder="Краткое описание…" rows="3" />
             <label class="form-label">Статус</label>
             <select v-model="form.status" class="form-input">
               <option value="draft">Черновик</option><option value="published">Опубликовать</option>
@@ -124,23 +124,18 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useNewsStore } from '@/store/news'
+import type { NewsItem } from '@/store/news'
 
-interface NewsItem { id: number; title: string; category: string; excerpt: string; author: string; date: string; views: number; status: 'published' | 'draft' }
-
-const items = ref<NewsItem[]>([
-  { id: 1, title: 'Запуск новой системы управления проектами', category: 'Компания', excerpt: 'С 1 июля переходим на новую платформу управления задачами — детали в прикреплённом руководстве.', author: 'Карпова А.В.', date: '05.06.2026', views: 214, status: 'published' },
-  { id: 2, title: 'Корпоратив: летний квест по городу', category: 'HR', excerpt: 'Приглашаем всех на летний корпоратив 21 июня. Формат: командный квест + барбекю.', author: 'Карпова А.В.', date: '03.06.2026', views: 189, status: 'published' },
-  { id: 3, title: 'Обновление политики дистанционной работы', category: 'Объявления', excerpt: 'С 1 июля вводятся новые правила гибкого графика. Просим ознакомиться до 15 июня.', author: 'Смирнов К.Д.', date: '01.06.2026', views: 302, status: 'published' },
-  { id: 4, title: 'Новый курс по промышленной безопасности', category: 'Обучение', excerpt: 'Обязательный курс для всех сотрудников производственных подразделений. Срок прохождения — до 30 июня.', author: 'Новикова О.П.', date: '28.05.2026', views: 87, status: 'published' },
-  { id: 5, title: 'Введение системы электронного документооборота', category: 'Компания', excerpt: 'Черновик. Переход на ЭДО запланирован на Q3 2026. Ожидает согласования.', author: 'Волков Д.Р.', date: '25.05.2026', views: 0, status: 'draft' },
-  { id: 6, title: 'Итоги аттестации первого полугодия', category: 'HR', excerpt: 'Черновик результатов аттестации — на согласовании у руководителей подразделений.', author: 'Карпова А.В.', date: '20.05.2026', views: 0, status: 'draft' },
-])
+const newsStore = useNewsStore()
+const { items } = storeToRefs(newsStore)
 
 const search = ref('')
 const filterStatus = ref('')
 const showModal = ref(false)
 const editingItem = ref<NewsItem | null>(null)
-const form = reactive({ title: '', category: 'Объявления', excerpt: '', status: 'draft' as 'published' | 'draft' })
+const form = reactive({ title: '', category: 'Объявления', teaser: '', status: 'draft' as 'published' | 'draft' })
 
 const publishedCount = computed(() => items.value.filter(i => i.status === 'published').length)
 
@@ -153,44 +148,43 @@ const tabs = computed(() => [
 const filtered = computed(() => {
   let list = items.value
   if (filterStatus.value) list = list.filter(i => i.status === filterStatus.value)
-  if (search.value) { const q = search.value.toLowerCase(); list = list.filter(i => i.title.toLowerCase().includes(q) || i.excerpt.toLowerCase().includes(q)) }
+  if (search.value) { const q = search.value.toLowerCase(); list = list.filter(i => i.title.toLowerCase().includes(q) || i.teaser.toLowerCase().includes(q)) }
   return list
 })
 
 function openCreate() {
   editingItem.value = null
-  Object.assign(form, { title: '', category: 'Объявления', excerpt: '', status: 'draft' })
+  Object.assign(form, { title: '', category: 'Объявления', teaser: '', status: 'draft' })
   showModal.value = true
 }
 
 function editItem(item: NewsItem) {
   editingItem.value = item
-  Object.assign(form, { title: item.title, category: item.category, excerpt: item.excerpt, status: item.status })
+  Object.assign(form, { title: item.title, category: item.category, teaser: item.teaser, status: item.status })
   showModal.value = true
 }
 
 function saveItem() {
   if (!form.title.trim()) return
   if (editingItem.value) {
-    const found = items.value.find(i => i.id === editingItem.value!.id)
-    if (found) Object.assign(found, { title: form.title, category: form.category, excerpt: form.excerpt, status: form.status })
+    newsStore.update(editingItem.value.id, { title: form.title, category: form.category, teaser: form.teaser, status: form.status })
   } else {
-    items.value.unshift({ id: Date.now(), title: form.title, category: form.category, excerpt: form.excerpt, author: 'Карпова А.В.', date: new Date().toLocaleDateString('ru'), views: 0, status: form.status })
+    newsStore.add({ title: form.title, category: form.category, teaser: form.teaser, content: '', date: new Date().toISOString().slice(0, 10), isImportant: false, author: 'Карпова А.В.', status: form.status })
   }
   showModal.value = false
 }
 
 function toggleStatus(item: NewsItem) {
-  item.status = item.status === 'published' ? 'draft' : 'published'
+  newsStore.toggleStatus(item.id)
 }
 
-const deleteTarget = ref<number | null>(null)
+const deleteTarget = ref<string | null>(null)
 const toast = ref('')
 function showToast(msg: string) { toast.value = msg; setTimeout(() => toast.value = '', 2500) }
-function deleteItem(id: number) { deleteTarget.value = id }
+function deleteItem(id: string) { deleteTarget.value = id }
 function doDelete() {
   if (deleteTarget.value !== null) {
-    items.value = items.value.filter(i => i.id !== deleteTarget.value)
+    newsStore.remove(deleteTarget.value)
     deleteTarget.value = null
     showToast('Новость удалена')
   }
