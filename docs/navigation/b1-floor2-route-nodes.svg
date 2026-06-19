@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190.55 841.89" role="img" aria-labelledby="title desc">
+  <title id="title">Корпус 1, второй этаж — дверные и маршрутные узлы</title>
+  <desc id="desc">Согласовательная схема дверей, лестниц и центрального коридора перед построением маршрутного графа.</desc>
+
+  <rect width="1190.55" height="841.89" fill="#ffffff"/>
+  <image href="../../public/maps/b1_floor2.svg" x="0" y="0" width="1190.55" height="841.89"/>
+
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="595.275" y="122" fill="#0f172a" font-size="28" font-weight="700">Корпус 1 · Этаж 2</text>
+    <text x="595.275" y="154" fill="#64748b" font-size="17">Подтверждённые дверные и маршрутные узлы</text>
+
+    <!-- Центральная ось коридора -->
+    <path d="M125 370H1065" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 9" opacity="0.78"/>
+    <rect x="550" y="352" width="90" height="34" rx="17" fill="#2563eb" stroke="#ffffff" stroke-width="4"/>
+    <text x="595" y="374" fill="#ffffff" font-size="14" font-weight="700">F2-C01</text>
+
+    <!-- Связи помещений с дверями -->
+    <g fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 5" opacity="0.75">
+      <path d="M300 275L240 345"/>
+      <path d="M545 275L522 345M640 275L660 345M753 275L793 345M960 275L950 345"/>
+      <path d="M178 470L183 394M395 470L404 394M487 470L465 394M640 470L725 394M800 470L791 394M1005 470L985 394"/>
+    </g>
+
+    <!-- Дверные узлы верхнего ряда -->
+    <g fill="#16a34a" stroke="#ffffff" stroke-width="3">
+      <circle cx="240" cy="345" r="10"/>
+      <circle cx="522" cy="345" r="10"/><circle cx="660" cy="345" r="10"/>
+      <circle cx="793" cy="345" r="10"/><circle cx="950" cy="345" r="10"/>
+    </g>
+    <g fill="#15803d" font-size="12" font-weight="700">
+      <text x="240" y="323">D01A</text>
+      <text x="522" y="323">D02</text><text x="660" y="323">D03</text>
+      <text x="793" y="323">D04</text><text x="950" y="323">D05</text>
+    </g>
+
+    <!-- Дверные узлы нижнего ряда -->
+    <g fill="#16a34a" stroke="#ffffff" stroke-width="3">
+      <circle cx="404" cy="394" r="10"/><circle cx="465" cy="394" r="10"/>
+      <circle cx="725" cy="394" r="10"/><circle cx="791" cy="394" r="10"/>
+      <circle cx="985" cy="394" r="10"/>
+    </g>
+    <g fill="#15803d" font-size="12" font-weight="700">
+      <text x="404" y="424">D07</text><text x="465" y="439">D08</text>
+      <text x="725" y="424">D09</text><text x="791" y="439">D10</text>
+      <text x="985" y="424">D11</text>
+    </g>
+
+    <!-- Подтверждённый вход F2-R06 по центру открытого участка -->
+    <circle cx="183" cy="394" r="10" fill="#16a34a" stroke="#ffffff" stroke-width="3"/>
+    <text x="183" y="424" fill="#15803d" font-size="12" font-weight="700">D06</text>
+
+    <!-- Лестницы как служебные узлы -->
+    <g fill="#f59e0b" stroke="#ffffff" stroke-width="3">
+      <circle cx="306" cy="394" r="12"/><circle cx="883" cy="394" r="12"/>
+    </g>
+    <g fill="#b45309" font-size="12" font-weight="700">
+      <text x="306" y="424">S01</text><text x="883" y="424">S02</text>
+    </g>
+
+    <!-- Коридорные проекции дверей -->
+    <g fill="#2563eb" opacity="0.9">
+      <circle cx="183" cy="370" r="5"/><circle cx="240" cy="370" r="5"/><circle cx="306" cy="370" r="5"/>
+      <circle cx="404" cy="370" r="5"/><circle cx="465" cy="370" r="5"/>
+      <circle cx="522" cy="370" r="5"/><circle cx="660" cy="370" r="5"/><circle cx="725" cy="370" r="5"/>
+      <circle cx="791" cy="370" r="5"/><circle cx="793" cy="370" r="5"/><circle cx="883" cy="370" r="5"/>
+      <circle cx="950" cy="370" r="5"/><circle cx="985" cy="370" r="5"/>
+    </g>
+
+    <g transform="translate(203 678)">
+      <rect width="784" height="90" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+      <circle cx="38" cy="29" r="9" fill="#16a34a"/>
+      <text x="56" y="35" text-anchor="start" fill="#334155" font-size="14">D — дверной проём</text>
+      <circle cx="250" cy="29" r="9" fill="#f59e0b"/>
+      <text x="268" y="35" text-anchor="start" fill="#334155" font-size="14">S — лестница</text>
+      <circle cx="438" cy="29" r="9" fill="#2563eb"/>
+      <text x="456" y="35" text-anchor="start" fill="#334155" font-size="14">C — коридор</text>
+      <text x="392" y="68" fill="#64748b" font-size="14">Маршрутный граф реализован локально</text>
+    </g>
+  </g>
+</svg>

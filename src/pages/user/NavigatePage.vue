@@ -76,8 +76,45 @@ const allPoints: MapPoint[] = [
   { id: 'hr',           x: 1057, y: 500, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
   // ── Старт ───────────────────────────────────────────────────
   { id: 'start',        x: 951,  y: 522, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
-  // ── Корпус 1, Этаж 2 (кабинеты будут добавлены) ─────────────
-  { id: 'b1f2_start',   x: 596,  y: 421, label: 'Коридор / Лестница',    room: 'Коридор',  category: 'start',    floor: 2, building: 'b1' },
+  // ── Корпус 1, Этаж 2 — подтверждённые помещения ─────────────
+  { id: 'F2-R01', x: 300,  y: 284, label: 'Генеральный директор',                                      room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R02', x: 545,  y: 284, label: 'Мужской туалет',                                            room: '2 этаж', category: 'wc',     floor: 2, building: 'b1' },
+  { id: 'F2-R03', x: 640,  y: 284, label: 'Женский туалет',                                            room: '2 этаж', category: 'wc',     floor: 2, building: 'b1' },
+  { id: 'F2-R04', x: 753,  y: 284, label: 'Комната питания и отдыха',                                  room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R05', x: 960,  y: 284, label: 'Служба технического маркетинга',                            room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R06', x: 178,  y: 477, label: 'Исполнительный директор',                                   room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R07', x: 395,  y: 477, label: 'Руководитель юридического отдела, Директор по строительству', room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R08', x: 487,  y: 477, label: 'Коммерческий директор',                                     room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R09', x: 640,  y: 477, label: 'Коммерческий отдел и отдел закупок',                         room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R10', x: 800,  y: 477, label: 'Финансовый директор',                                       room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'F2-R11', x: 1005, y: 477, label: 'Бухгалтерия',                                               room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
+  { id: 'b1f2_start', x: 595, y: 370, label: 'Центральный коридор', room: '2 этаж', category: 'start', floor: 2, building: 'b1' },
+  // ── Корпус 1, Этаж 2 — двери и служебные маршрутные узлы ───
+  { id: 'F2-D01A', x: 240, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D02',  x: 522, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D03',  x: 660, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D04',  x: 793, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D05',  x: 950, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D06',  x: 183, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D07',  x: 404, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D08',  x: 465, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D09',  x: 725, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D10',  x: 791, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-D11',  x: 985, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-S01',  x: 306, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-S02',  x: 883, y: 394, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J01',  x: 183, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J02',  x: 240, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J03',  x: 306, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J04',  x: 404, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J05',  x: 465, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J06',  x: 522, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J08',  x: 660, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J09',  x: 725, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J10',  x: 792, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J11',  x: 883, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J12',  x: 950, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
+  { id: 'F2-J13',  x: 985, y: 370, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
   // ── Коридорные и дверные узлы ────────────────────────────────
   { id: 'start_door',   x: 958,  y: 490, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_right',      x: 959,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
@@ -135,6 +172,45 @@ const edges: [string, string][] = [
   ['tech_room1', 'd_tr1'],
   ['d_tr1',      'c_tdept'],
   ['techdir',    'c_left'],
+  // ── Этаж 2: коридорный хребет ───────────────────────────────
+  ['F2-J01',      'F2-J02'],
+  ['F2-J02',      'F2-J03'],
+  ['F2-J03',      'F2-J04'],
+  ['F2-J04',      'F2-J05'],
+  ['F2-J05',      'F2-J06'],
+  ['F2-J06',      'b1f2_start'],
+  ['b1f2_start',  'F2-J08'],
+  ['F2-J08',      'F2-J09'],
+  ['F2-J09',      'F2-J10'],
+  ['F2-J10',      'F2-J11'],
+  ['F2-J11',      'F2-J12'],
+  ['F2-J12',      'F2-J13'],
+  // ── Этаж 2: двери → коридор ─────────────────────────────────
+  ['F2-D01A', 'F2-J02'],
+  ['F2-D02',  'F2-J06'],
+  ['F2-D03',  'F2-J08'],
+  ['F2-D04',  'F2-J10'],
+  ['F2-D05',  'F2-J12'],
+  ['F2-D06',  'F2-J01'],
+  ['F2-D07',  'F2-J04'],
+  ['F2-D08',  'F2-J05'],
+  ['F2-D09',  'F2-J09'],
+  ['F2-D10',  'F2-J10'],
+  ['F2-D11',  'F2-J13'],
+  ['F2-S01',  'F2-J03'],
+  ['F2-S02',  'F2-J11'],
+  // ── Этаж 2: помещения → двери ───────────────────────────────
+  ['F2-R01', 'F2-D01A'],
+  ['F2-R02', 'F2-D02'],
+  ['F2-R03', 'F2-D03'],
+  ['F2-R04', 'F2-D04'],
+  ['F2-R05', 'F2-D05'],
+  ['F2-R06', 'F2-D06'],
+  ['F2-R07', 'F2-D07'],
+  ['F2-R08', 'F2-D08'],
+  ['F2-R09', 'F2-D09'],
+  ['F2-R10', 'F2-D10'],
+  ['F2-R11', 'F2-D11'],
 ]
 
 function findPath(from: string, to: string): string[] {
@@ -559,9 +635,86 @@ function roomStrokeOpacity(id: string): number {
           </template>
           <!-- ═══ КОНЕЦ ЭТАЖ 1 ═══ -->
 
-          <!-- ═══ КОРПУС 1 · ЭТАЖ 2 (кабинеты будут добавлены) ═══ -->
+          <!-- ═══ КОРПУС 1 · ЭТАЖ 2 ═══ -->
           <template v-if="selectedBuilding.id === 'b1' && selectedFloor.id === 2">
-            <!-- помещения появятся после загрузки плана -->
+            <!-- Генеральный директор -->
+            <rect x="106" y="230" width="388" height="109"
+              :fill="roomFill('F2-R01','')" :stroke="roomStroke('F2-R01','')"
+              :stroke-width="roomStrokeWidth('F2-R01')" :stroke-opacity="roomStrokeOpacity('F2-R01')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R01')"/>
+            <text x="300" y="278" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Генеральный</text>
+            <text x="300" y="296" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
+
+            <!-- Мужской туалет -->
+            <rect x="507" y="230" width="79" height="109"
+              :fill="roomFill('F2-R02','')" :stroke="roomStroke('F2-R02','')"
+              :stroke-width="roomStrokeWidth('F2-R02')" :stroke-opacity="roomStrokeOpacity('F2-R02')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R02')"/>
+            <text x="546" y="278" text-anchor="middle" font-size="10" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужской</text>
+            <text x="546" y="292" text-anchor="middle" font-size="10" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">туалет</text>
+
+            <!-- Женский туалет -->
+            <rect x="598" y="230" width="84" height="109"
+              :fill="roomFill('F2-R03','')" :stroke="roomStroke('F2-R03','')"
+              :stroke-width="roomStrokeWidth('F2-R03')" :stroke-opacity="roomStrokeOpacity('F2-R03')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R03')"/>
+            <text x="640" y="278" text-anchor="middle" font-size="10" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женский</text>
+            <text x="640" y="292" text-anchor="middle" font-size="10" fill="#166534" font-family="sans-serif" font-weight="700" style="pointer-events:none">туалет</text>
+
+            <!-- Комната питания и отдыха -->
+            <rect x="690" y="230" width="132" height="109"
+              :fill="roomFill('F2-R04','')" :stroke="roomStroke('F2-R04','')"
+              :stroke-width="roomStrokeWidth('F2-R04')" :stroke-opacity="roomStrokeOpacity('F2-R04')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R04')"/>
+            <text x="756" y="270" text-anchor="middle" font-size="11" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Комната</text>
+            <text x="756" y="285" text-anchor="middle" font-size="11" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">питания</text>
+            <text x="756" y="300" text-anchor="middle" font-size="11" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">и отдыха</text>
+
+            <!-- Служба технического маркетинга -->
+            <rect x="833" y="230" width="252" height="109"
+              :fill="roomFill('F2-R05','')" :stroke="roomStroke('F2-R05','')"
+              :stroke-width="roomStrokeWidth('F2-R05')" :stroke-opacity="roomStrokeOpacity('F2-R05')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R05')"/>
+            <text x="959" y="278" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Служба технического</text>
+            <text x="959" y="296" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">маркетинга</text>
+
+            <!-- Исполнительный директор -->
+            <rect x="106" y="352" width="154" height="201"
+              :fill="roomFill('F2-R06','')" :stroke="roomStroke('F2-R06','')"
+              :stroke-width="roomStrokeWidth('F2-R06')" :stroke-opacity="roomStrokeOpacity('F2-R06')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R06')"/>
+            <text x="178" y="470" text-anchor="middle" font-size="12" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Исполнительный</text>
+            <text x="178" y="486" text-anchor="middle" font-size="12" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
+
+            <!-- Руководитель юридического отдела, Директор по строительству -->
+            <rect x="350" y="400" width="91" height="153"
+              :fill="roomFill('F2-R07','')" :stroke="roomStroke('F2-R07','')"
+              :stroke-width="roomStrokeWidth('F2-R07')" :stroke-opacity="roomStrokeOpacity('F2-R07')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R07')"/>
+            <text x="395" y="450" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Руководитель</text>
+            <text x="395" y="463" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">юридического отдела,</text>
+            <text x="395" y="476" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Директор по</text>
+            <text x="395" y="489" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">строительству</text>
+
+            <!-- Коммерческий директор -->
+            <rect x="450" y="400" width="72" height="153"
+              :fill="roomFill('F2-R08','')" :stroke="roomStroke('F2-R08','')"
+              :stroke-width="roomStrokeWidth('F2-R08')" :stroke-opacity="roomStrokeOpacity('F2-R08')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R08')"/>
+            <text x="486" y="463" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Коммерческий</text>
+            <text x="486" y="477" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
+
+            <!-- Коммерческий отдел и отдел закупок -->
+            <rect x="530" y="400" width="218" height="153"
+              :fill="roomFill('F2-R09','')" :stroke="roomStroke('F2-R09','')"
+              :stroke-width="roomStrokeWidth('F2-R09')" :stroke-opacity="roomStrokeOpacity('F2-R09')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R09')"/>
+            <text x="639" y="463" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Коммерческий отдел</text>
+            <text x="639" y="480" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">и отдел закупок</text>
+
+            <!-- Финансовый директор -->
+            <rect x="758" y="400" width="81" height="153"
+              :fill="roomFill('F2-R10','')" :stroke="roomStroke('F2-R10','')"
+              :stroke-width="roomStrokeWidth('F2-R10')" :stroke-opacity="roomStrokeOpacity('F2-R10')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R10')"/>
+            <text x="799" y="463" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Финансовый</text>
+            <text x="799" y="477" text-anchor="middle" font-size="9" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
+
+            <!-- Бухгалтерия -->
+            <rect x="925" y="400" width="160" height="153"
+              :fill="roomFill('F2-R11','')" :stroke="roomStroke('F2-R11','')"
+              :stroke-width="roomStrokeWidth('F2-R11')" :stroke-opacity="roomStrokeOpacity('F2-R11')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('F2-R11')"/>
+            <text x="1005" y="480" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Бухгалтерия</text>
           </template>
 
           <!-- ═══ МАРШРУТ ═══ -->

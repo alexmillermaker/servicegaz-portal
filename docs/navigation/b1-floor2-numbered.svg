@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190.55 841.89" role="img" aria-labelledby="title desc">
+  <title id="title">Корпус 1, второй этаж — черновая нумерация помещений</title>
+  <desc id="desc">Согласовательная карта с идентификаторами одиннадцати помещений, двух лестниц и коридора.</desc>
+
+  <rect width="1190.55" height="841.89" fill="#ffffff"/>
+  <image href="../../public/maps/b1_floor2.svg" x="0" y="0" width="1190.55" height="841.89"/>
+
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="595.275" y="145" fill="#0f172a" font-size="28" font-weight="700">Корпус 1 · Этаж 2</text>
+    <text x="595.275" y="177" fill="#64748b" font-size="17">Черновая нумерация для согласования названий</text>
+
+    <g fill="#dc2626" stroke="#ffffff" stroke-width="4">
+      <rect x="251" y="264" width="98" height="36" rx="18"/>
+      <rect x="507" y="264" width="76" height="36" rx="18"/>
+      <rect x="602" y="264" width="76" height="36" rx="18"/>
+      <rect x="704" y="264" width="98" height="36" rx="18"/>
+      <rect x="911" y="264" width="98" height="36" rx="18"/>
+
+      <rect x="129" y="457" width="98" height="36" rx="18"/>
+      <rect x="357" y="457" width="76" height="36" rx="18"/>
+      <rect x="449" y="457" width="76" height="36" rx="18"/>
+      <rect x="591" y="457" width="98" height="36" rx="18"/>
+      <rect x="762" y="457" width="76" height="36" rx="18"/>
+      <rect x="956" y="457" width="98" height="36" rx="18"/>
+    </g>
+
+    <g fill="#ffffff" font-size="15" font-weight="700">
+      <text x="300" y="287">F2-R01</text>
+      <text x="545" y="287">F2-R02</text>
+      <text x="640" y="287">F2-R03</text>
+      <text x="753" y="287">F2-R04</text>
+      <text x="960" y="287">F2-R05</text>
+
+      <text x="178" y="480">F2-R06</text>
+      <text x="395" y="480">F2-R07</text>
+      <text x="487" y="480">F2-R08</text>
+      <text x="640" y="480">F2-R09</text>
+      <text x="800" y="480">F2-R10</text>
+      <text x="1005" y="480">F2-R11</text>
+    </g>
+
+    <g fill="#f59e0b" stroke="#ffffff" stroke-width="4">
+      <rect x="256" y="517" width="98" height="34" rx="17"/>
+      <rect x="836" y="517" width="98" height="34" rx="17"/>
+    </g>
+    <g fill="#ffffff" font-size="14" font-weight="700">
+      <text x="305" y="539">F2-S01</text>
+      <text x="885" y="539">F2-S02</text>
+    </g>
+
+    <g fill="#2563eb" stroke="#ffffff" stroke-width="4">
+      <rect x="546" y="352" width="98" height="34" rx="17"/>
+    </g>
+    <text x="595" y="374" fill="#ffffff" font-size="14" font-weight="700">F2-C01</text>
+
+    <g transform="translate(286 684)">
+      <rect width="618" height="76" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+      <circle cx="36" cy="27" r="9" fill="#dc2626"/>
+      <text x="55" y="33" text-anchor="start" fill="#334155" font-size="15">R — помещение</text>
+      <circle cx="226" cy="27" r="9" fill="#f59e0b"/>
+      <text x="245" y="33" text-anchor="start" fill="#334155" font-size="15">S — лестница</text>
+      <circle cx="416" cy="27" r="9" fill="#2563eb"/>
+      <text x="435" y="33" text-anchor="start" fill="#334155" font-size="15">C — коридор</text>
+      <text x="309" y="61" fill="#64748b" font-size="14">Рабочая навигация не изменена</text>
+    </g>
+  </g>
+</svg>
