@@ -21,3 +21,4 @@
 2. Completed: collect and confirm the user's mapping between assigned room IDs and real room names/types.
 3. Implemented locally, pending review: add room boundaries, labels, and clickable areas by analogy with the first floor.
 4. Implemented locally and validated: confirmed doors and corridor nodes are connected to the second-floor route graph; all 11 destinations are reachable, and the unused F2-D01B opening is excluded.
+5. Implemented locally, pending final verification: provide one searchable destination list derived from all user-facing `allPoints` entries across buildings and floors; service route nodes and start points remain excluded.

@@ -27,6 +27,7 @@ const showBuildingPicker = ref(false)
 const showFloorPicker = ref(false)
 const showPointsList = ref(false)
 const selectingStart = ref(false)
+const destinationSearch = ref('')
 
 type PointCategory = 'office' | 'service' | 'wc' | 'shower' | 'locker' | 'stairs' | 'start' | 'storage' | 'corridor' | 'security'
 
@@ -399,7 +400,7 @@ function onMapTouchEnd(e: TouchEvent) {
 
 const categoryLabels: Record<string, string> = {
   office: 'Офис', service: 'Медицина', wc: 'Санузел', shower: 'Душевая',
-  locker: 'Раздевалка', start: 'Вход', storage: 'Тех. помещение',
+  locker: 'Раздевалка', stairs: 'Лестница', start: 'Вход', storage: 'Тех. помещение',
   security: 'Охрана',
 }
 const categoryColors: Record<string, { background: string; color: string }> = {
@@ -408,9 +409,98 @@ const categoryColors: Record<string, { background: string; color: string }> = {
   wc:       { background: '#f0fdf4', color: '#166534' },
   shower:   { background: '#e0f2fe', color: '#0369a1' },
   locker:   { background: '#ede9fe', color: '#6d28d9' },
+  stairs:   { background: '#fef3c7', color: '#b45309' },
   start:    { background: '#dcfce7', color: '#15803d' },
   storage:  { background: '#f8fafc', color: '#475569' },
   security: { background: '#fff7ed', color: '#c2410c' },
+}
+
+// Единый источник мест назначения: новые пользовательские точки из allPoints
+// автоматически появляются в поиске без отдельного изменения шаблона.
+const destinationPoints = computed(() =>
+  allPoints.filter(p => p.label && p.category !== 'corridor' && p.category !== 'start')
+)
+
+function normalizeSearch(value: string): string {
+  return value.toLocaleLowerCase('ru-RU').replaceAll('ё', 'е').trim()
+}
+
+const filteredDestinationPoints = computed(() => {
+  const query = normalizeSearch(destinationSearch.value)
+  const currentBuildingId = selectedBuilding.value.id
+  const currentFloorId = selectedFloor.value.id
+
+  return destinationPoints.value
+    .filter(point => {
+      if (!query) return true
+      const building = buildings.find(item => item.id === point.building)
+      const searchableFields = [
+        point.label,
+        point.room,
+        categoryLabels[point.category] ?? '',
+        building?.label ?? point.building,
+        `этаж ${point.floor}`,
+        `${point.floor} этаж`,
+      ]
+      return searchableFields.some(field => normalizeSearch(field).includes(query))
+    })
+    .sort((a, b) => {
+      const aCurrent = a.building === currentBuildingId && a.floor === currentFloorId ? 0 : 1
+      const bCurrent = b.building === currentBuildingId && b.floor === currentFloorId ? 0 : 1
+      if (aCurrent !== bCurrent) return aCurrent - bCurrent
+      if (a.building !== b.building) return a.building.localeCompare(b.building, 'ru-RU')
+      if (a.floor !== b.floor) return a.floor - b.floor
+      return a.label.localeCompare(b.label, 'ru-RU')
+    })
+})
+
+const sheetPoints = computed(() =>
+  selectingStart.value ? visiblePoints.value : filteredDestinationPoints.value
+)
+
+function pointMeta(point: MapPoint): string {
+  const building = buildings.find(item => item.id === point.building)
+  const genericFloorLabels = new Set([`${point.floor} этаж`, `этаж ${point.floor}`])
+  const room = point.room.trim()
+  return [
+    building?.label ?? point.building,
+    `Этаж ${point.floor}`,
+    room && !genericFloorLabels.has(room.toLocaleLowerCase('ru-RU')) ? room : '',
+    categoryLabels[point.category] ?? '',
+  ].filter(Boolean).join(' · ')
+}
+
+function openDestinationPicker() {
+  destinationSearch.value = ''
+  selectingStart.value = false
+  showPointsList.value = true
+}
+
+function clearDestination() {
+  targetId.value = null
+  haptic.tap()
+}
+
+function selectSheetPoint(point: MapPoint) {
+  if (selectingStart.value) {
+    selectPoint(point.id)
+    return
+  }
+
+  const building = buildings.find(item => item.id === point.building)
+  const floor = floors.find(item => item.id === point.floor)
+  if (building && floor && (building.id !== selectedBuilding.value.id || floor.id !== selectedFloor.value.id)) {
+    selectedBuilding.value = building
+    selectedFloor.value = floor
+    startId.value = defaultStart(building.id, floor.id)
+    targetId.value = null
+    resetVB()
+  }
+
+  if (point.id !== startId.value) targetId.value = point.id
+  destinationSearch.value = ''
+  showPointsList.value = false
+  haptic.tap()
 }
 
 function pointIcon(cat: string): string {
@@ -420,6 +510,7 @@ function pointIcon(cat: string): string {
     wc:       'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
     shower:   'M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2',
     locker:   'M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z',
+    stairs:   'M3 20h5v-4h4v-4h4V8h5',
     start:    'M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
     storage:  'M5 8h14M5 8a2 2 0 1 0 0-4h14a2 2 0 1 0 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8',
     security: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
@@ -755,9 +846,10 @@ function roomStrokeOpacity(id: string): number {
     </div>
 
     <div class="nav-page__below-map">
-      <button class="nav-page__points-btn" @click="showPointsList = !showPointsList">
+      <button class="nav-page__points-btn" @click="openDestinationPicker">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Список помещений
+        Все места назначения
+        <span class="nav-page__points-count">{{ destinationPoints.length }}</span>
       </button>
     </div>
 
@@ -771,11 +863,16 @@ function roomStrokeOpacity(id: string): number {
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
-          <div class="nav-page__info-text">
-            <p class="nav-page__info-name">{{ targetPoint?.label ?? 'Не выбрано' }}</p>
-            <p class="nav-page__info-room">{{ targetPoint?.room ?? 'Нажмите на помещение или выберите из списка' }}</p>
-          </div>
-          <button v-if="targetId" class="nav-page__change-btn" @click="targetId = null">Сбросить</button>
+          <button class="nav-page__destination-trigger" @click="openDestinationPicker">
+            <span class="nav-page__info-text">
+              <span class="nav-page__info-name">{{ targetPoint?.label ?? 'Найти место назначения' }}</span>
+              <span class="nav-page__info-room">{{ targetPoint ? pointMeta(targetPoint) : 'Поиск по всем корпусам и этажам' }}</span>
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button v-if="targetId" class="nav-page__destination-clear" aria-label="Сбросить точку назначения" @click="clearDestination">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
       </div>
       <div class="nav-page__info-card">
@@ -790,7 +887,7 @@ function roomStrokeOpacity(id: string): number {
             <p class="nav-page__info-name">{{ startPoint?.label ?? 'Вход / Коридор' }}</p>
             <p class="nav-page__info-room">{{ startPoint?.room ?? 'Коридор' }}</p>
           </div>
-          <button class="nav-page__change-btn" @click="showPointsList = true; selectingStart = true">Изменить</button>
+          <button class="nav-page__change-btn" @click="destinationSearch = ''; showPointsList = true; selectingStart = true">Изменить</button>
         </div>
       </div>
     </div>
@@ -824,21 +921,35 @@ function roomStrokeOpacity(id: string): number {
           @touchstart="sheetSwipe.onTouchStart" @touchmove="sheetSwipe.onTouchMove" @touchend="sheetSwipe.onTouchEnd">
           <div class="nav-page__sheet-handle" />
           <div class="nav-page__sheet-head">
-            <h3>{{ selectingStart ? 'Выберите стартовую точку' : 'Все помещения' }}</h3>
-            <button @click="showPointsList = false; selectingStart = false">
+            <h3>{{ selectingStart ? 'Выберите стартовую точку' : `Места назначения · ${destinationPoints.length}` }}</h3>
+            <button @click="showPointsList = false; selectingStart = false; destinationSearch = ''">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div v-if="!selectingStart" class="nav-page__sheet-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+            <input
+              v-model="destinationSearch"
+              type="search"
+              inputmode="search"
+              autocomplete="off"
+              aria-label="Поиск места назначения"
+              placeholder="Название, кабинет, этаж…"
+            />
+            <button v-if="destinationSearch" aria-label="Очистить поиск" @click="destinationSearch = ''">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div class="nav-page__sheet-list">
             <button
-              v-for="pt in visiblePoints.filter(p => selectingStart || p.category !== 'start')"
+              v-for="pt in sheetPoints"
               :key="pt.id"
               class="nav-page__sheet-item"
               :class="{
                 'is-target':  !selectingStart && targetId === pt.id,
                 'is-start':   selectingStart  && startId  === pt.id,
               }"
-              @click="selectPoint(pt.id)"
+              @click="selectSheetPoint(pt)"
             >
               <div class="nav-page__sheet-icon" :style="categoryColors[pt.category]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" :stroke="categoryColors[pt.category].color" stroke-width="1.8" stroke-linecap="round">
@@ -847,12 +958,17 @@ function roomStrokeOpacity(id: string): number {
               </div>
               <div>
                 <p class="nav-page__sheet-name">{{ pt.label }}</p>
-                <p class="nav-page__sheet-room">{{ pt.room }} · {{ categoryLabels[pt.category] }}</p>
+                <p class="nav-page__sheet-room">{{ selectingStart ? `${pt.room} · ${categoryLabels[pt.category]}` : pointMeta(pt) }}</p>
               </div>
               <svg v-if="(!selectingStart && targetId === pt.id) || (selectingStart && startId === pt.id)"
                 width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
               <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-3)" stroke-width="1.8" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
+            <div v-if="!sheetPoints.length" class="nav-page__sheet-empty">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+              <p>Ничего не найдено</p>
+              <span>Попробуйте изменить запрос</span>
+            </div>
           </div>
         </div>
       </div>
@@ -921,6 +1037,12 @@ function roomStrokeOpacity(id: string): number {
   transition: border-color .15s, background .15s, color .15s;
 }
 .nav-page__points-btn:active { background: var(--c-accent-dim); border-color: var(--c-accent); color: var(--c-accent); }
+.nav-page__points-count {
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-full);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--c-accent-dim); color: var(--c-accent);
+  font-size: 11px; font-weight: 700;
+}
 
 /* placeholder for removed picker — kept for structural clarity */
 .nav-page__picker-item {
@@ -984,9 +1106,22 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__info-label { font-size: var(--fs-xs); font-weight: 700; color: var(--c-accent); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: var(--gap-sm); }
 .nav-page__info-row { display: flex; align-items: center; gap: var(--gap-md); }
 .nav-page__info-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.nav-page__info-text { flex: 1; }
-.nav-page__info-name { font-size: var(--fs-sm); font-weight: 600; }
-.nav-page__info-room { font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__info-text { flex: 1; min-width: 0; }
+.nav-page__info-name { display: block; font-size: var(--fs-sm); font-weight: 600; }
+.nav-page__info-room { display: block; font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__destination-trigger {
+  min-width: 0; flex: 1; display: flex; align-items: center; gap: var(--gap-sm);
+  padding: 4px 0; text-align: left; background: transparent; border: none;
+  color: inherit; font-family: var(--font-body); cursor: pointer;
+}
+.nav-page__destination-trigger > svg { color: var(--c-text-3); flex-shrink: 0; }
+.nav-page__destination-clear {
+  width: 34px; height: 34px; border-radius: var(--r-md); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--c-text-3); background: transparent; border: 1px solid var(--c-border);
+  cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
+}
+.nav-page__destination-clear:active { background: var(--c-bg-2); color: var(--c-text); }
 .nav-page__change-btn {
   font-size: var(--fs-xs); font-weight: 600; color: var(--c-text-2);
   border: 1px solid var(--c-border); border-radius: var(--r-md);
@@ -1044,6 +1179,22 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__sheet-head { display: flex; align-items: center; justify-content: space-between; padding: var(--gap-md) var(--gap-md) var(--gap-sm); flex-shrink: 0; }
 .nav-page__sheet-head h3 { font-size: var(--fs-md); font-weight: 700; }
 .nav-page__sheet-head button { color: var(--c-text-3); }
+.nav-page__sheet-search {
+  margin: 0 var(--gap-md) var(--gap-sm); min-height: 44px; padding: 0 12px;
+  display: flex; align-items: center; gap: 9px; flex-shrink: 0;
+  background: var(--c-bg-2); border: 1.5px solid transparent; border-radius: var(--r-lg);
+  color: var(--c-text-3); transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+.nav-page__sheet-search:focus-within { background: var(--c-surface); border-color: var(--c-accent); }
+.nav-page__sheet-search input {
+  min-width: 0; flex: 1; border: none; outline: none; background: transparent;
+  color: var(--c-text); font-family: var(--font-body); font-size: var(--fs-sm);
+}
+.nav-page__sheet-search input::placeholder { color: var(--c-text-3); }
+.nav-page__sheet-search button {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--c-text-3); cursor: pointer;
+}
 .nav-page__sheet-list { overflow-y: auto; flex: 1; padding: 0 var(--gap-md) var(--gap-lg); display: flex; flex-direction: column; gap: 2px; }
 
 .nav-page__sheet-item {
@@ -1057,8 +1208,15 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__sheet-item.is-start  { background: #dcfce7; }
 
 .nav-page__sheet-icon { width: 38px; height: 38px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-page__sheet-item > div:nth-child(2) { min-width: 0; flex: 1; }
 .nav-page__sheet-name { font-size: var(--fs-sm); font-weight: 600; }
 .nav-page__sheet-room { font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__sheet-empty {
+  min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--c-text-3); text-align: center; gap: 6px;
+}
+.nav-page__sheet-empty p { font-size: var(--fs-sm); font-weight: 600; color: var(--c-text-2); }
+.nav-page__sheet-empty span { font-size: var(--fs-xs); }
 
 /* Анимации */
 .dropdown-enter-active, .dropdown-leave-active { transition: all 0.2s var(--ease-out); }
