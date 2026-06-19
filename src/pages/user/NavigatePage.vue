@@ -211,19 +211,31 @@ function changeFloor(f: typeof floors[0]) {
 
 
 // ── ViewBox-зум: координатное пространство per-floor ──
+interface MapViewBox { x: number; y: number; w: number; h: number }
+
+const DEFAULT_VIEW_BOX: MapViewBox = { x: 0, y: 0, w: 1190.55, h: 841.89 }
 const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
   b1_1: { w: 1190.55, h: 841.89 },
   b1_2: { w: 1190.55, h: 841.89 },
 }
+// У планов одинаковый холст, но второй этаж ниже по видимой геометрии.
+// Начальное кадрирование 1.10× выравнивает их воспринимаемый размер,
+// сохраняя исходные координаты карты и маркеров.
+const INITIAL_VIEW_BOXES: Record<string, MapViewBox> = {
+  b1_1: DEFAULT_VIEW_BOX,
+  b1_2: { x: 54.07, y: 38.24, w: 1082.40, h: 765.41 },
+}
+const floorKey = computed(() => `${selectedBuilding.value.id}_${selectedFloor.value.id}`)
 const floorDims = computed(() => {
-  const key = `${selectedBuilding.value.id}_${selectedFloor.value.id}`
-  return FLOOR_DIMS[key] ?? { w: 1190.55, h: 841.89 }
+  return FLOOR_DIMS[floorKey.value] ?? { w: DEFAULT_VIEW_BOX.w, h: DEFAULT_VIEW_BOX.h }
 })
+const initialViewBox = computed(() => INITIAL_VIEW_BOXES[floorKey.value] ?? DEFAULT_VIEW_BOX)
 const vbX = ref(0)
 const vbY = ref(0)
 const vbW = ref(1190.55)
 const vbH = ref(841.89)
 const zoom = computed(() => floorDims.value.w / vbW.value)
+const baseZoom = computed(() => floorDims.value.w / initialViewBox.value.w)
 const isDragging = ref(false)
 const mapContainerRef = ref<HTMLElement | null>(null)
 
@@ -237,8 +249,8 @@ function clampVB() {
   if (vbY.value + vbH.value > h) vbY.value = h - vbH.value
 }
 function resetVB() {
-  const { w, h } = floorDims.value
-  vbX.value = 0; vbY.value = 0; vbW.value = w; vbH.value = h
+  const { x, y, w, h } = initialViewBox.value
+  vbX.value = x; vbY.value = y; vbW.value = w; vbH.value = h
 }
 
 function getPinchDist(e: TouchEvent) {
@@ -255,9 +267,9 @@ function zoomAround(newZoom: number, pivotX?: number, pivotY?: number) {
   const svgPx = vbX.value + px * vbW.value / cW
   const svgPy = vbY.value + py * vbH.value / cH
   const { w, h } = floorDims.value
-  const cz = Math.min(Math.max(newZoom, 0.5), 3)
+  const cz = Math.min(Math.max(newZoom, baseZoom.value), 3)
   const nW = w / cz, nH = h / cz
-  if (cz <= 1) { resetVB() }
+  if (cz <= baseZoom.value + 0.001) { resetVB() }
   else { vbX.value = svgPx - px * nW / cW; vbY.value = svgPy - py * nH / cH; vbW.value = nW; vbH.value = nH; clampVB() }
 }
 function zoomIn()  { zoomAround(zoom.value + 0.25); haptic.tap() }
@@ -585,7 +597,7 @@ function roomStrokeOpacity(id: string): number {
       <div class="nav-page__zoom" @mousedown.stop @touchstart.stop>
         <button class="nav-page__zoom-btn" @click="zoomIn"  :disabled="zoom >= 2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="nav-page__zoom-sep" />
-        <button class="nav-page__zoom-btn" @click="zoomOut" :disabled="zoom <= 0.6"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="nav-page__zoom-btn" @click="zoomOut" :disabled="zoom <= baseZoom + 0.001"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
     </div>
 
