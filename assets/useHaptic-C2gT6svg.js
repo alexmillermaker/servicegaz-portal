@@ -1,1 +1,0 @@
-var e=typeof navigator<`u`&&`vibrate`in navigator;function t(){return{tap:()=>e&&navigator.vibrate(6),light:()=>e&&navigator.vibrate(10),success:()=>e&&navigator.vibrate([8,40,8]),error:()=>e&&navigator.vibrate([25,50,25]),heavy:()=>e&&navigator.vibrate(35)}}export{t};

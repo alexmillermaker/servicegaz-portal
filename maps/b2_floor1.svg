@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190.55 841.89" role="img" aria-labelledby="title desc">
+  <title id="title">Корпус 2, первый этаж — временная схема</title>
+  <desc id="desc">Условная карта для проверки межкорпусной маршрутизации. Будет заменена фактическим планом.</desc>
+  <rect width="1190.55" height="841.89" fill="#ffffff"/>
+  <g fill="none" stroke="#1075bb" stroke-width="8" stroke-linecap="square" stroke-linejoin="round">
+    <rect x="110" y="235" width="970" height="365" rx="2"/>
+    <path d="M110 380H760M760 380V235M760 380H1080"/>
+    <path d="M180 380V460H900V380"/>
+  </g>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="595" y="112" fill="#0f172a" font-size="30" font-weight="700">Корпус 2 · Этаж 1</text>
+    <text x="595" y="150" fill="#dc2626" font-size="18" font-weight="700">Временная схема — будет заменена фактическим планом</text>
+    <text x="435" y="435" fill="#64748b" font-size="16" letter-spacing="5">УСЛОВНЫЙ КОРИДОР</text>
+    <text x="180" y="500" fill="#64748b" font-size="15">Вход из Корпуса 1</text>
+  </g>
+</svg>
