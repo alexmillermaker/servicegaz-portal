@@ -75,41 +75,34 @@
           <h2 class="settings-section__title">Список доступа</h2>
           <div class="access-info-banner">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Войти в систему могут только сотрудники из этого списка. Вход — по номеру телефона (логин) и 6-значному паролю, который выдаёт администратор.</span>
+            <span>Войти могут только сотрудники с карточкой и активным доступом. Логин всегда равен номеру телефона, постоянный пароль формирует администратор.</span>
           </div>
 
-          <!-- Добавление -->
+          <!-- Создание карточки выполняется в едином разделе сотрудников -->
           <div class="access-add">
-            <div style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
-              <div class="input-with-prefix" style="flex:1;min-width:180px">
-                <span class="input-prefix">+7</span>
-                <input v-model="newPhone" class="form-input" style="padding-left:36px" placeholder="9XX XXX XX XX" maxlength="13" @keyup.enter="addAccess" />
-              </div>
-              <input v-model="newName" class="form-input" style="flex:1.5;min-width:200px" placeholder="ФИО сотрудника" @keyup.enter="addAccess" />
-              <select v-model="newRole" class="form-input" style="min-width:130px">
-                <option value="EMPLOYEE">Сотрудник</option>
-                <option value="HR">HR</option>
-              </select>
+            <div style="flex:1">
+              <p style="font-size:13px;font-weight:700;color:#111827">Новая учётная запись создаётся вместе с карточкой сотрудника</p>
+              <p style="font-size:12px;color:#6b7280;margin-top:3px">Так логин, контакты, должность и роль остаются в одном источнике данных.</p>
             </div>
-            <button class="btn btn--primary" @click="addAccess" :disabled="!newPhone.trim()">
+            <RouterLink class="btn btn--primary" to="/admin/employees">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Добавить
-            </button>
+              Создать карточку
+            </RouterLink>
           </div>
 
           <!-- Поиск -->
           <div class="search-wrap" style="margin-bottom:4px">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input v-model="accessSearch" class="search-input" placeholder="Поиск по телефону или имени…" />
+            <input v-model="accessSearch" class="search-input" placeholder="Поиск по логину, телефону или имени…" />
           </div>
 
           <!-- Список -->
           <div class="access-list">
             <div class="access-list__header">
-              <span>Телефон</span><span>ФИО</span><span>Роль</span><span>Доступ</span><span>Принят</span><span></span>
+              <span>Логин</span><span>ФИО</span><span>Роль</span><span>Доступ</span><span>Принят</span><span></span>
             </div>
             <div v-for="emp in filteredAccess" :key="emp.id" class="access-row">
-              <span class="access-phone">{{ emp.phone }}</span>
+              <span class="access-phone">{{ employeeLogin(emp) }}</span>
               <span class="access-name">{{ emp.name }}</span>
               <span>
                 <span class="role-badge" :class="emp.role === 'HR' ? 'role-badge--hr' : 'role-badge--employee'">
@@ -128,7 +121,7 @@
               </span>
               <span class="access-date">{{ emp.hireDate ? new Date(emp.hireDate).toLocaleDateString('ru-RU') : '—' }}</span>
               <div style="display:flex;gap:4px">
-                <button class="icon-btn" @click="resetOtp(emp.id)" title="Сбросить пароль">
+                <button class="icon-btn" @click="resetPassword(emp.id)" title="Сформировать новый пароль">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                 </button>
                 <button class="icon-btn icon-btn--danger" @click="removeAccess(emp.id)" title="Удалить из системы">
@@ -155,8 +148,8 @@
             <div class="auth-method-badge">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <div>
-                <div style="font-size:13px;font-weight:700;color:#111827">Телефон + Пароль</div>
-                <div style="font-size:12px;color:#6b7280">Сотрудник входит по номеру телефона и 6-значному паролю, выданному администратором.</div>
+                <div style="font-size:13px;font-weight:700;color:#111827">Постоянный логин + пароль</div>
+                <div style="font-size:12px;color:#6b7280">Пароль генерируется безопасным способом. Восстановить доступ может только администратор.</div>
               </div>
               <span class="auth-method-active">Активен</span>
             </div>
@@ -165,11 +158,8 @@
           <div class="settings-form" style="margin-top:20px">
             <div class="form-row-2">
               <div>
-                <label class="form-label">Длина пароля</label>
-                <select v-model.number="auth.passwordLength" class="form-input">
-                  <option :value="6">6 цифр</option>
-                  <option :value="8">8 символов</option>
-                </select>
+                <label class="form-label">Стандарт пароля</label>
+                <div class="form-input" style="display:flex;align-items:center;background:#f8fafc;color:#374151">Не менее 12 символов разных типов</div>
               </div>
               <div>
                 <label class="form-label">Срок сессии (часы)</label>
@@ -311,34 +301,34 @@
       </div>
     </Teleport>
 
-    <!-- OTP-модал (после добавления / сброса кода) -->
+    <!-- Новый постоянный пароль после восстановления администратором -->
     <Teleport to="body">
-      <div v-if="newOtpInfo" class="modal-overlay" @click.self="newOtpInfo=null">
+      <div v-if="passwordInfo" class="modal-overlay" @click.self="passwordInfo=null">
         <div class="modal modal--sm">
           <div class="modal__header">
-            <h2>Код доступа</h2>
-            <button class="modal__close" @click="newOtpInfo=null">
+            <h2>Новый пароль</h2>
+            <button class="modal__close" @click="passwordInfo=null">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div class="modal__body">
-            <div class="otp-info-banner">
+            <div class="credential-info-banner">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
               <div>
-                <p style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:2px">Сообщите код сотруднику</p>
-                <p style="font-size:12px;color:#0369a1">Вход: {{ newOtpInfo.phone }}</p>
+                <p style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:2px">Сообщите новые данные сотруднику</p>
+                <p style="font-size:12px;color:#0369a1">Логин: {{ passwordInfo.login }}</p>
               </div>
             </div>
-            <div class="otp-code-block">
-              <span class="otp-code">{{ newOtpInfo.otp }}</span>
+            <div class="credential-code-block">
+              <span class="credential-code">{{ passwordInfo.password }}</span>
             </div>
-            <div style="font-size:12px;color:#6b7280;text-align:center">{{ newOtpInfo.name }}</div>
+            <div style="font-size:12px;color:#6b7280;text-align:center">{{ passwordInfo.name }}</div>
             <p style="font-size:11px;color:#92400e;background:#fffbeb;border-radius:8px;padding:10px;line-height:1.5">
-              Код будет скрыт после закрытия этого окна. Кнопка «↺» в списке доступа создаёт новый.
+              Старый пароль больше не действует. Новый пароль постоянный и будет скрыт после закрытия окна.
             </p>
           </div>
           <div class="modal__footer">
-            <button class="btn btn--primary" style="width:100%" @click="newOtpInfo=null">Понятно</button>
+            <button class="btn btn--primary" style="width:100%" @click="passwordInfo=null">Понятно</button>
           </div>
         </div>
       </div>
@@ -350,6 +340,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useEmployeesStore } from '@/store/employees'
 import { useToast } from '@/shared/composables/useToast'
+import { employeeLogin } from '@/shared/utils/employeeCredentials'
 
 const activeTab = ref('access')
 const toast = useToast()
@@ -373,38 +364,17 @@ const accessList = computed(() =>
   empStore.employees.filter(e => e.status !== 'ARCHIVED')
 )
 
-const newPhone = ref('')
-const newName = ref('')
-const newRole = ref<'EMPLOYEE' | 'HR'>('EMPLOYEE')
 const accessSearch = ref('')
 const removeTarget = ref<string | null>(null)  // employee id
 
-// OTP показываем HR после добавления нового
-const newOtpInfo = ref<{ name: string; phone: string; otp: string } | null>(null)
+const passwordInfo = ref<{ name: string; login: string; password: string } | null>(null)
 
 const filteredAccess = computed(() => {
   const list = accessList.value
   if (!accessSearch.value.trim()) return list
   const q = accessSearch.value.toLowerCase()
-  return list.filter(e => e.phone.includes(q) || e.name.toLowerCase().includes(q))
+  return list.filter(e => employeeLogin(e).toLowerCase().includes(q) || e.phone.includes(q) || e.name.toLowerCase().includes(q))
 })
-
-function addAccess() {
-  const phone = newPhone.value.trim()
-  if (!phone) return
-  if (empStore.findByPhone(phone)) {
-    showSavedMsg('Этот номер уже зарегистрирован в системе', 'warning')
-    return
-  }
-  const { employee, otp } = empStore.addEmployee({
-    name: newName.value.trim() || 'Новый сотрудник',
-    phone, role: newRole.value,
-  })
-  newPhone.value = ''
-  newName.value = ''
-  newRole.value = 'EMPLOYEE'
-  newOtpInfo.value = { name: employee.name, phone: employee.phone, otp }
-}
 
 function toggleAccess(id: string, currentStatus: string) {
   const active = currentStatus === 'ACTIVE' || currentStatus === 'INVITED'
@@ -421,18 +391,17 @@ function doRemoveAccess() {
   }
 }
 
-function resetOtp(id: string) {
-  const otp = empStore.resetOtp(id)
+function resetPassword(id: string) {
+  const password = empStore.resetPassword(id)
   const emp = empStore.employees.find(e => e.id === id)
-  if (emp) newOtpInfo.value = { name: emp.name, phone: emp.phone, otp }
+  if (emp) passwordInfo.value = { name: emp.name, login: employeeLogin(emp), password }
 }
 
 // Авторизация (пароли)
-const auth = reactive({ passwordLength: 6, sessionHours: 8, maxAttempts: 3, lockMin: 15 })
+const auth = reactive({ sessionHours: 8, maxAttempts: 3, lockMin: 15 })
 const authToggles = reactive([
   { key: 'single_session',  label: 'Одна активная сессия',       desc: 'Новый вход автоматически завершает предыдущую сессию', enabled: true  },
   { key: 'notify_login',    label: 'Уведомлять при входе',       desc: 'Фиксировать каждый успешный вход сотрудника в журнале', enabled: false },
-  { key: 'force_change',    label: 'Смена пароля при первом входе', desc: 'Требовать смену первоначального пароля при первом входе', enabled: false },
 ])
 
 // Уведомления
@@ -602,7 +571,7 @@ function saveSection() { showSavedMsg() }
 .modal__body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
 .modal__footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid #f3f4f6; }
 .role-badge--employee { background: #f3f4f6; color: #374151; }
-.otp-info-banner { display: flex; gap: 10px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; color: #0369a1; }
-.otp-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 16px; }
-.otp-code { font-size: 34px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace; }
+.credential-info-banner { display: flex; gap: 10px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; color: #0369a1; }
+.credential-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 16px; }
+.credential-code { max-width: 100%; overflow-wrap: anywhere; font-size: 24px; font-weight: 800; letter-spacing: 3px; color: #15803d; font-family: monospace; text-align: center; }
 </style>

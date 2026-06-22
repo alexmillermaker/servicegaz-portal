@@ -149,7 +149,15 @@
               </div>
             </div>
             <div class="emp-detail__info-grid">
+              <div class="emp-detail__info-row"><span>Логин (телефон)</span><strong>{{ employeeLogin(selected) }}</strong></div>
               <div class="emp-detail__info-row"><span>Должность</span><strong>{{ selected.position }}</strong></div>
+              <div class="emp-detail__info-row">
+                <span>Руководитель</span>
+                <select class="emp-detail__manager-select" :value="selected.managerId ?? ''" @change="setManager">
+                  <option value="">Не назначен</option>
+                  <option v-for="manager in managerCandidates" :key="manager.id" :value="manager.id">{{ manager.name }}</option>
+                </select>
+              </div>
               <div class="emp-detail__info-row"><span>Дата приёма</span><strong>{{ formatDate(selected.hireDate) }}</strong></div>
               <div class="emp-detail__info-row"><span>Последний вход</span><strong>{{ selected.lastLogin }}</strong></div>
               <div class="emp-detail__info-row">
@@ -181,7 +189,7 @@
                 <button class="emp-detail__action emp-detail__action--primary">Редактировать</button>
                 <button class="emp-detail__action emp-detail__action--secondary" @click="resetPassword">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                  Сбросить пароль
+                  Сформировать новый пароль
                 </button>
                 <button class="emp-detail__action emp-detail__action--danger" @click="toggleBlock">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -222,10 +230,17 @@
                 <option value="HR">HR-менеджер</option>
               </select>
             </div>
+            <div class="add-modal__field">
+              <label>Руководитель</label>
+              <select v-model="newEmp.managerId">
+                <option value="">Не назначен</option>
+                <option v-for="manager in availableManagers" :key="manager.id" :value="manager.id">{{ manager.name }}</option>
+              </select>
+            </div>
           </div>
           <div class="add-modal__footer">
             <button class="add-modal__cancel" @click="showAddModal = false">Отмена</button>
-            <button class="add-modal__save" :disabled="!newEmp.name || !newEmp.phone" @click="addEmployee">Добавить</button>
+            <button class="add-modal__save" :disabled="!newEmp.name.trim() || !newEmp.phone.trim()" @click="addEmployee">Создать карточку</button>
           </div>
         </div>
       </div>
@@ -237,29 +252,29 @@
       <div v-if="resetPasswordInfo" class="modal-overlay" @click.self="resetPasswordInfo=null">
         <div class="modal">
           <div class="modal__header">
-            <h2>Пароль сброшен</h2>
+            <h2>Новый пароль сформирован</h2>
             <button class="modal__close-btn" @click="resetPasswordInfo=null">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div class="modal__body">
-            <div class="otp-info-banner" style="background:#fef3c7;border-color:#fde68a;color:#92400e">
+            <div class="credential-info-banner" style="background:#fef3c7;border-color:#fde68a;color:#92400e">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
               <div>
-                <p style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:4px">Новый пароль сгенерирован</p>
+                <p style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:4px">Новый постоянный пароль</p>
                 <p style="font-size:12px;color:#92400e;line-height:1.5">Сообщите сотруднику новый пароль. Старый пароль больше не действует.</p>
               </div>
             </div>
-            <div class="otp-code-block">
-              <span class="otp-code">{{ resetPasswordInfo.otp }}</span>
+            <div class="credential-code-block">
+              <span class="credential-code">{{ resetPasswordInfo.password }}</span>
             </div>
-            <div class="otp-details">
+            <div class="credential-details">
               <div><span>Сотрудник:</span><strong>{{ resetPasswordInfo.name }}</strong></div>
-              <div><span>Телефон (логин):</span><strong>{{ resetPasswordInfo.phone }}</strong></div>
+              <div><span>Логин:</span><strong>{{ resetPasswordInfo.login }}</strong></div>
             </div>
-            <p class="otp-warning">
+            <p class="credential-warning">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Пароль будет скрыт после закрытия этого окна.
+              Пароль постоянный и будет скрыт после закрытия этого окна. Восстановить доступ повторно может только администратор.
             </p>
           </div>
           <div class="modal__footer">
@@ -271,36 +286,36 @@
 
     <!-- Модал с паролем для нового сотрудника -->
     <Teleport to="body">
-      <div v-if="newOtpInfo" class="modal-overlay" @click.self="newOtpInfo=null">
+      <div v-if="newCredentialsInfo" class="modal-overlay" @click.self="newCredentialsInfo=null">
         <div class="modal">
           <div class="modal__header">
             <h2>Сотрудник добавлен</h2>
-            <button class="modal__close-btn" @click="newOtpInfo=null">
+            <button class="modal__close-btn" @click="newCredentialsInfo=null">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div class="modal__body">
-            <div class="otp-info-banner">
+            <div class="credential-info-banner">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
               <div>
-                <p style="font-weight:700;font-size:13px;color:#111827;margin-bottom:4px">Первоначальный пароль</p>
-                <p style="font-size:12px;color:#6b7280;line-height:1.5">Сообщите сотруднику логин (номер телефона) и этот пароль для первого входа в систему.</p>
+                <p style="font-weight:700;font-size:13px;color:#111827;margin-bottom:4px">Постоянные данные для входа</p>
+                <p style="font-size:12px;color:#6b7280;line-height:1.5">Сообщите сотруднику логин и сгенерированный безопасный пароль.</p>
               </div>
             </div>
-            <div class="otp-code-block">
-              <span class="otp-code">{{ newOtpInfo.otp }}</span>
+            <div class="credential-code-block">
+              <span class="credential-code">{{ newCredentialsInfo.password }}</span>
             </div>
-            <div class="otp-details">
-              <div><span>Сотрудник:</span><strong>{{ newOtpInfo.name }}</strong></div>
-              <div><span>Телефон:</span><strong>{{ newOtpInfo.phone }}</strong></div>
+            <div class="credential-details">
+              <div><span>Сотрудник:</span><strong>{{ newCredentialsInfo.name }}</strong></div>
+              <div><span>Логин:</span><strong>{{ newCredentialsInfo.login }}</strong></div>
             </div>
-            <p class="otp-warning">
+            <p class="credential-warning">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Пароль будет скрыт после закрытия этого окна. Сбросить пароль можно в карточке сотрудника.
+              Пароль действует постоянно до восстановления администратором и будет скрыт после закрытия этого окна.
             </p>
           </div>
           <div class="modal__footer">
-            <button class="btn btn--primary" @click="newOtpInfo=null">Понятно</button>
+            <button class="btn btn--primary" @click="newCredentialsInfo=null">Понятно</button>
           </div>
         </div>
       </div>
@@ -314,9 +329,12 @@ import { onboardingTasks } from '@/api/mockData'
 import type { Employee, UserRole } from '@/api/mockData'
 import { useToast } from '@/shared/composables/useToast'
 import { useEmployeesStore } from '@/store/employees'
+import { useAdaptationStore } from '@/store/adaptation'
+import { employeeLogin } from '@/shared/utils/employeeCredentials'
 
 const toast = useToast()
 const empStore = useEmployeesStore()
+const adaptStore = useAdaptationStore()
 const employees = computed(() => empStore.employees)
 const selected = ref<Employee | null>(null)
 const search = ref('')
@@ -327,13 +345,21 @@ const filterAdapt = ref('')
 const page = ref(1)
 const perPage = ref(10)
 const showAddModal = ref(false)
-const newEmp = reactive({ name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE' as UserRole })
+const newEmp = reactive({ name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE' as UserRole, managerId: '' })
 
 const departments = computed(() =>
   [...new Set(employees.value.map(e => e.department).filter(Boolean))].sort() as string[]
 )
 
+const availableManagers = computed(() => employees.value.filter(e => e.status !== 'ARCHIVED'))
+const managerCandidates = computed(() => availableManagers.value.filter(e => e.id !== selected.value?.id))
+
 function adaptPct(emp: Employee) {
+  const plan = adaptStore.findByEmployeeId(emp.id)
+  if (plan) {
+    if (!plan.tasks.length) return plan.progress
+    return Math.round((plan.tasks.filter(task => task.done).length / plan.tasks.length) * 100)
+  }
   if (!emp.onboardingProgress || onboardingTasks.length === 0) return 0
   return Math.round((emp.onboardingProgress.length / onboardingTasks.length) * 100)
 }
@@ -350,7 +376,7 @@ const filteredEmployees = computed(() => {
   let list = employees.value
   if (search.value.trim()) {
     const q = search.value.toLowerCase()
-    list = list.filter(e => e.name.toLowerCase().includes(q) || e.phone.includes(q) || (e.email ?? '').toLowerCase().includes(q))
+    list = list.filter(e => e.name.toLowerCase().includes(q) || employeeLogin(e).toLowerCase().includes(q) || e.phone.includes(q) || (e.email ?? '').toLowerCase().includes(q))
   }
   if (filterDept.value)   list = list.filter(e => e.department === filterDept.value)
   if (filterRole.value)   list = list.filter(e => e.role === filterRole.value)
@@ -388,6 +414,14 @@ function toggleBlock() {
   toast.success(newStatus === 'BLOCKED' ? 'Доступ заблокирован' : 'Доступ восстановлен')
 }
 
+function setManager(event: Event) {
+  if (!selected.value) return
+  const managerId = (event.target as HTMLSelectElement).value || undefined
+  empStore.updateEmployee(selected.value.id, { managerId })
+  selected.value = { ...selected.value, managerId }
+  toast.success(managerId ? 'Руководитель назначен' : 'Руководитель снят')
+}
+
 function initials(name: string) { return name.split(' ').map(w => w[0]).slice(0, 2).join('') }
 const COLORS = ['#0079C2', '#8b5cf6', '#22c55e', '#f59e0b', '#ec4899', '#14b8a6', '#f97316']
 function avatarColor(name: string) { return COLORS[name.charCodeAt(0) % COLORS.length] }
@@ -396,24 +430,28 @@ function statusLabel(s: string) { return ({ ACTIVE: 'Активен', INVITED: '
 function formatDate(d: string) { if (!d) return '—'; return new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
 function addDays(date: string, days: number) { if (!date) return ''; const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0] }
 
-const newOtpInfo = ref<{ name: string; phone: string; otp: string } | null>(null)
-const resetPasswordInfo = ref<{ name: string; phone: string; otp: string } | null>(null)
+const newCredentialsInfo = ref<{ name: string; login: string; password: string } | null>(null)
+const resetPasswordInfo = ref<{ name: string; login: string; password: string } | null>(null)
 
 function resetPassword() {
   if (!selected.value) return
-  const otp = empStore.resetOtp(selected.value.id)
-  resetPasswordInfo.value = { name: selected.value.name, phone: selected.value.phone, otp }
+  const password = empStore.resetPassword(selected.value.id)
+  resetPasswordInfo.value = { name: selected.value.name, login: employeeLogin(selected.value), password }
 }
 
 function addEmployee() {
-  if (!newEmp.name || !newEmp.phone) return
-  const { employee: emp, otp } = empStore.addEmployee({
+  if (!newEmp.name.trim() || !newEmp.phone.trim()) return
+  if (empStore.findByPhone(newEmp.phone)) {
+    toast.warning('Этот номер телефона уже зарегистрирован')
+    return
+  }
+  const { employee: emp, password } = empStore.addEmployee({
     name: newEmp.name, phone: newEmp.phone, email: newEmp.email,
-    position: newEmp.position, department: newEmp.department, role: newEmp.role as UserRole,
+    position: newEmp.position, department: newEmp.department, role: newEmp.role as UserRole, managerId: newEmp.managerId,
   })
   showAddModal.value = false
-  Object.assign(newEmp, { name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE' })
-  newOtpInfo.value = { name: emp.name, phone: emp.phone, otp }
+  Object.assign(newEmp, { name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE', managerId: '' })
+  newCredentialsInfo.value = { name: emp.name, login: employeeLogin(emp), password }
 }
 </script>
 
@@ -492,6 +530,7 @@ function addEmployee() {
 .emp-detail__info-row:last-child { border-bottom: none; }
 .emp-detail__info-row > span:first-child { color: #9ca3af; flex-shrink: 0; }
 .emp-detail__info-row strong { color: #111827; font-weight: 600; text-align: right; }
+.emp-detail__manager-select { max-width: 170px; padding: 5px 8px; border: 1px solid #dbe1e8; border-radius: 6px; background: #fff; color: #111827; font: 600 12px var(--font-body); }
 .emp-detail__adapt { display: flex; align-items: center; gap: 6px; }
 .emp-detail__section-title { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
 .emp-detail__adaptation-card { background: #f9fafb; border: 1px solid #e5e9ef; border-radius: 8px; padding: 10px 12px; }
@@ -526,7 +565,7 @@ function addEmployee() {
 .add-modal__save:disabled { opacity: 0.4; cursor: not-allowed; }
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-/* OTP modal */
+/* Модальные окна учётных данных */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); }
 .modal__header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #f3f4f6; }
@@ -534,14 +573,14 @@ function addEmployee() {
 .modal__close-btn { width: 32px; height: 32px; border-radius: 6px; background: #f3f4f6; border: none; color: #6b7280; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .modal__body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 .modal__footer { padding: 16px 24px; border-top: 1px solid #f3f4f6; display: flex; justify-content: flex-end; }
-.otp-info-banner { display: flex; gap: 12px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px; color: #0369a1; }
-.otp-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 20px; }
-.otp-code { font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace; }
-.otp-details { display: flex; flex-direction: column; gap: 6px; }
-.otp-details div { display: flex; justify-content: space-between; font-size: 13px; }
-.otp-details span { color: #6b7280; }
-.otp-details strong { color: #111827; }
-.otp-warning { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: #92400e; background: #fffbeb; border-radius: 8px; padding: 10px; line-height: 1.5; }
+.credential-info-banner { display: flex; gap: 12px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px; color: #0369a1; }
+.credential-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 20px; }
+.credential-code { max-width: 100%; overflow-wrap: anywhere; font-size: 25px; font-weight: 800; letter-spacing: 3px; color: #15803d; font-family: monospace; text-align: center; }
+.credential-details { display: flex; flex-direction: column; gap: 6px; }
+.credential-details div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.credential-details span { color: #6b7280; }
+.credential-details strong { color: #111827; overflow-wrap: anywhere; text-align: right; }
+.credential-warning { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: #92400e; background: #fffbeb; border-radius: 8px; padding: 10px; line-height: 1.5; }
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
 .btn--primary { background: #0079C2; color: #fff; } .btn--primary:hover { background: #005fa3; }
 </style>

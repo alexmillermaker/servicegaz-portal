@@ -3,53 +3,24 @@
 // ============================================================
 import { mockEmployees, mockDocuments, mockNews } from './mockData'
 import type { Employee, Document, NewsItem } from './mockData'
-import { normalizePhone } from '@/shared/utils/normalizePhone'
+import { employeeLogin, normalizeLogin } from '@/shared/utils/employeeCredentials'
 
 const delay = (ms = 800) => new Promise(resolve => setTimeout(resolve, ms))
 
 export type AuthResult =
   | { ok: true; employee: Employee }
-  | { ok: false; code: 'NOT_IN_WHITELIST' | 'BLOCKED' | 'ARCHIVED' | 'INVALID_OTP' }
+  | { ok: false; code: 'NOT_IN_WHITELIST' | 'BLOCKED' | 'ARCHIVED' | 'INVALID_CREDENTIALS' }
 
-// ─── Шаг 1: Проверка номера телефона по белому списку ────────
-export async function checkPhone(phone: string): Promise<
-  | { ok: true }
-  | { ok: false; code: 'NOT_IN_WHITELIST' | 'BLOCKED' | 'ARCHIVED' }
-> {
-  await delay(600)
-  const normalized = normalizePhone(phone)
-  const emp = mockEmployees.find(e => normalizePhone(e.phone) === normalized)
-
-  if (!emp) return { ok: false, code: 'NOT_IN_WHITELIST' }
-  if (emp.status === 'BLOCKED') return { ok: false, code: 'BLOCKED' }
-  if (emp.status === 'ARCHIVED') return { ok: false, code: 'ARCHIVED' }
-  return { ok: true }
-}
-
-// ─── Вход по номеру телефона и паролю (единый шаг) ───────────
-export async function loginWithPassword(phone: string, password: string): Promise<AuthResult> {
+// ─── Вход по постоянному логину и паролю ─────────────────────
+export async function loginWithPassword(login: string, password: string): Promise<AuthResult> {
   await delay(800)
-  const normalized = normalizePhone(phone)
-  const emp = mockEmployees.find(e => normalizePhone(e.phone) === normalized)
+  const normalized = normalizeLogin(login)
+  const emp = mockEmployees.find(employee => normalizeLogin(employeeLogin(employee)) === normalized)
 
   if (!emp) return { ok: false, code: 'NOT_IN_WHITELIST' }
   if (emp.status === 'BLOCKED') return { ok: false, code: 'BLOCKED' }
   if (emp.status === 'ARCHIVED') return { ok: false, code: 'ARCHIVED' }
-  if (emp.otp !== password) return { ok: false, code: 'INVALID_OTP' }
-
-  return { ok: true, employee: emp }
-}
-
-// ─── Шаг 2: Верификация OTP-кода ─────────────────────────────
-export async function verifyOtp(phone: string, otp: string): Promise<AuthResult> {
-  await delay(900)
-  const normalized = normalizePhone(phone)
-  const emp = mockEmployees.find(e => normalizePhone(e.phone) === normalized)
-
-  if (!emp) return { ok: false, code: 'NOT_IN_WHITELIST' }
-  if (emp.status === 'BLOCKED') return { ok: false, code: 'BLOCKED' }
-  if (emp.status === 'ARCHIVED') return { ok: false, code: 'ARCHIVED' }
-  if (emp.otp !== otp) return { ok: false, code: 'INVALID_OTP' }
+  if (emp.password !== password) return { ok: false, code: 'INVALID_CREDENTIALS' }
 
   return { ok: true, employee: emp }
 }

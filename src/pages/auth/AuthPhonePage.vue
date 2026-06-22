@@ -39,19 +39,17 @@ function onInput(e: Event) {
 
 function onPasswordInput(e: Event) {
   const input = e.target as HTMLInputElement
-  const val = input.value.replace(/\D/g, '').slice(0, 6)
-  password.value = val
+  password.value = input.value
   error.value = ''
-  input.value = val
 }
 
 const isPhoneComplete = computed(() => {
-  let d = rawPhone.value.replace(/\D/g, '')
-  if (d.startsWith('7') || d.startsWith('8')) d = d.slice(1)
-  return d.length === 10
+  let digits = rawPhone.value.replace(/\D/g, '')
+  if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1)
+  return digits.length === 10
 })
 
-const canSubmit = computed(() => isPhoneComplete.value && password.value.length === 6)
+const canSubmit = computed(() => isPhoneComplete.value && password.value.length >= 6)
 
 async function submit() {
   if (!canSubmit.value || loading.value) return
@@ -66,8 +64,8 @@ async function submit() {
     router.push(res.employee.role === 'HR' ? '/admin' : '/profile')
   } else {
     const msgs: Record<string, string> = {
-      NOT_IN_WHITELIST: 'Неверный номер телефона или пароль.',
-      INVALID_OTP: 'Неверный номер телефона или пароль.',
+      NOT_IN_WHITELIST: 'Неверный логин или пароль.',
+      INVALID_CREDENTIALS: 'Неверный логин или пароль.',
       BLOCKED: 'Доступ заблокирован. Обратитесь в отдел кадров.',
       ARCHIVED: 'Учётная запись архивирована.',
     }
@@ -86,10 +84,10 @@ async function submit() {
     <div class="auth-phone__card">
       <div class="auth-phone__card-head">
         <h1 class="auth-phone__title">Вход в систему</h1>
-        <p class="auth-phone__desc">Введите номер телефона и пароль для входа</p>
+        <p class="auth-phone__desc">Введите номер телефона и постоянный пароль</p>
       </div>
 
-      <!-- Телефон -->
+      <!-- Телефон — постоянный логин -->
       <div class="auth-phone__field">
         <label class="auth-phone__label">Номер телефона (логин)</label>
         <div class="auth-phone__input-wrap" :class="{ 'is-error': error, 'is-filled': isPhoneComplete }">
@@ -127,13 +125,13 @@ async function submit() {
           </svg>
           <input
             class="auth-phone__input"
-            :type="showPass ? 'tel' : 'password'"
-            inputmode="numeric"
+            :type="showPass ? 'text' : 'password'"
+            inputmode="text"
             autocomplete="current-password"
             enterkeyhint="go"
-            placeholder="6-значный пароль"
+            placeholder="Введите пароль"
             :value="password"
-            maxlength="6"
+            maxlength="128"
             @input="onPasswordInput"
             @keydown.enter="submit"
           />
@@ -170,7 +168,7 @@ async function submit() {
     </div>
 
     <div class="auth-phone__footer">
-      <button class="auth-phone__help">Нужна помощь?</button>
+      <p class="auth-phone__help">Забыли пароль? Обратитесь к администратору системы.</p>
     </div>
   </div>
 </template>
@@ -322,7 +320,9 @@ async function submit() {
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--c-accent);
-  cursor: pointer;
+  cursor: default;
+  text-align: center;
+  line-height: 1.4;
   padding: var(--gap-sm) var(--gap-md);
 }
 

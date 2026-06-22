@@ -7,8 +7,9 @@ export type UserStatus = 'ACTIVE' | 'INVITED' | 'BLOCKED' | 'ARCHIVED'
 
 export interface Employee {
   id:                 string
+  managerId?:         string
   phone:              string
-  otp:                string
+  password:           string
   name:               string
   position:           string
   role:               UserRole
@@ -136,7 +137,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-hr-1',
     phone: '+79995556677',
-    otp: '222222',
+    password: '222222',
     name: 'Сидоров Александр Владимирович',
     position: 'HR-директор',
     role: 'HR',
@@ -150,7 +151,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-1',
     phone: '+79991112233',
-    otp: '111111',
+    password: '111111',
     name: 'Иванов Петр Сергеевич',
     position: 'Инженер-конструктор',
     role: 'EMPLOYEE',
@@ -164,7 +165,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-2',
     phone: '+79992223344',
-    otp: '333333',
+    password: '333333',
     name: 'Сидорова Анна Викторовна',
     position: 'Бухгалтер',
     role: 'EMPLOYEE',
@@ -178,7 +179,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-3',
     phone: '+79993334455',
-    otp: '444444',
+    password: '444444',
     name: 'Кузнецов Дмитрий Олегович',
     position: 'Инженер',
     role: 'EMPLOYEE',
@@ -192,7 +193,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-4',
     phone: '+79994445566',
-    otp: '555555',
+    password: '555555',
     name: 'Морозова Елена Андреевна',
     position: 'HR-менеджер',
     role: 'EMPLOYEE',
@@ -206,7 +207,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-5',
     phone: '+79995556688',
-    otp: '666666',
+    password: '666666',
     name: 'Волков Алексей Павлович',
     position: 'Специалист',
     role: 'EMPLOYEE',
@@ -220,7 +221,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-6',
     phone: '+79996667788',
-    otp: '777777',
+    password: '777777',
     name: 'Галлямова Роза Ильдаровна',
     position: 'Юрист',
     role: 'EMPLOYEE',
@@ -234,7 +235,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-7',
     phone: '+79997778899',
-    otp: '888888',
+    password: '888888',
     name: 'Тихонов Сергей Николаевич',
     position: 'Мастер',
     role: 'EMPLOYEE',
@@ -248,7 +249,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-8',
     phone: '+79998889900',
-    otp: '999999',
+    password: '999999',
     name: 'Лебедева Ольга Евгеньевна',
     position: 'Менеджер',
     role: 'EMPLOYEE',
@@ -262,7 +263,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-9',
     phone: '+79990001122',
-    otp: '121212',
+    password: '121212',
     name: 'Данилов Павел Андреевич',
     position: 'Разработчик',
     role: 'EMPLOYEE',
@@ -276,7 +277,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-10',
     phone: '+79990011223',
-    otp: '131313',
+    password: '131313',
     name: 'Егорова Светлана Владимировна',
     position: 'Бухгалтер',
     role: 'EMPLOYEE',
@@ -290,7 +291,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-11',
     phone: '+79990022334',
-    otp: '141414',
+    password: '141414',
     name: 'Петров Игорь Сергеевич',
     position: 'Администратор',
     role: 'EMPLOYEE',
@@ -304,7 +305,7 @@ export const mockEmployees: Employee[] = [
   {
     id: 'emp-blocked',
     phone: '+79999990000',
-    otp: '000000',
+    password: '000000',
     name: 'Петров К.К.',
     position: 'Не определено',
     role: 'EMPLOYEE',

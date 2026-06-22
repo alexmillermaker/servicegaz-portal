@@ -135,6 +135,17 @@ const allPoints: MapPoint[] = [
   { id: 'd_otiz',       x: 151,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_design_jct', x: 242,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_design',     x: 248,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // ── Корпус 1, Этаж 1 — подтверждённые переходные узлы ──────
+  { id: 'F1-JS01', x: 306, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-S01',  x: 306, y: 500, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-JS02', x: 883, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-S02',  x: 883, y: 500, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-B01',  x: 812, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // ── Корпус 2, Этаж 1 — временная схема до загрузки плана ───
+  { id: 'B2-E01', x: 180, y: 420, label: 'Вход из Корпуса 1', room: 'Временная схема', category: 'start', floor: 1, building: 'b2' },
+  { id: 'B2-C01', x: 595, y: 420, label: '', room: '', category: 'corridor', floor: 1, building: 'b2' },
+  { id: 'B2-D01', x: 900, y: 420, label: '', room: '', category: 'corridor', floor: 1, building: 'b2' },
+  { id: 'B2-P01', x: 900, y: 315, label: 'Условная точка Корпуса 2', room: 'Временная схема', category: 'office', floor: 1, building: 'b2' },
 ]
 
 const visiblePoints = computed(() =>
@@ -144,10 +155,12 @@ const visiblePoints = computed(() =>
 const edges: [string, string][] = [
   // ── Коридорный хребет (горизонтальный, y=415 — центр коридора) ──
   ['c_far_left',   'c_design_jct'],
-  ['c_design_jct', 'c_left'],
+  ['c_design_jct', 'F1-JS01'],
+  ['F1-JS01',      'c_left'],
   ['c_left',       'c_tdept'],
   ['c_tdept',      'c_tr2'],
-  ['c_tr2',        'c_right'],
+  ['c_tr2',        'F1-JS02'],
+  ['F1-JS02',      'c_right'],
   ['c_right',      'c_med_jct'],
   ['c_med_jct',    'c_sec'],
   ['c_sec',        'c_hr'],
@@ -158,7 +171,10 @@ const edges: [string, string][] = [
   ['c_left',       'c_top'],
   ['c_tr2',        'd_hall'],
   ['d_hall',       'd_meeting_entry'],
+  ['d_hall',       'F1-B01'],
   ['c_med_jct',    'd_medic'],
+  ['F1-JS01',      'F1-S01'],
+  ['F1-JS02',      'F1-S02'],
   // ── Комнаты → узлы ───────────────────────────────────────────
   ['start',      'start_door'],
   ['otiz',       'd_otiz'],
@@ -212,6 +228,14 @@ const edges: [string, string][] = [
   ['F2-R09', 'F2-D09'],
   ['F2-R10', 'F2-D10'],
   ['F2-R11', 'F2-D11'],
+  // ── Межэтажные и межкорпусные переходы ─────────────────────
+  ['F1-S01', 'F2-S01'],
+  ['F1-S02', 'F2-S02'],
+  ['F1-B01', 'B2-E01'],
+  // ── Корпус 2: временный маршрут первого этажа ──────────────
+  ['B2-E01', 'B2-C01'],
+  ['B2-C01', 'B2-D01'],
+  ['B2-D01', 'B2-P01'],
 ]
 
 function findPath(from: string, to: string): string[] {
@@ -246,10 +270,78 @@ const routePath = computed<string[]>(() =>
   targetId.value && !isBuilding2Target.value ? findPath(startId.value, targetId.value) : []
 )
 
+interface RouteSegment {
+  key: string
+  building: string
+  floor: number
+  pointIds: string[]
+}
+
+function pointMapKey(point: MapPoint): string {
+  return `${point.building}_${point.floor}`
+}
+
+const routeSegments = computed<RouteSegment[]>(() => {
+  const segments: RouteSegment[] = []
+  for (const id of routePath.value) {
+    const point = allPoints.find(item => item.id === id)
+    if (!point) continue
+    const key = pointMapKey(point)
+    const current = segments[segments.length - 1]
+    if (!current || current.key !== key) {
+      segments.push({ key, building: point.building, floor: point.floor, pointIds: [id] })
+    } else {
+      current.pointIds.push(id)
+    }
+  }
+  return segments
+})
+
+const currentRouteSegment = computed(() =>
+  routeSegments.value.find(segment => segment.key === `${selectedBuilding.value.id}_${selectedFloor.value.id}`)
+)
+
+const currentRoutePoints = computed(() =>
+  (currentRouteSegment.value?.pointIds ?? [])
+    .map(id => allPoints.find(point => point.id === id))
+    .filter((point): point is MapPoint => !!point)
+)
+
+const routeBoundaryPoints = computed(() => {
+  const points = currentRoutePoints.value
+  if (points.length < 2) return []
+  return [points[0], points[points.length - 1]].filter(point => point.id !== startId.value && point.id !== targetId.value)
+})
+
+function pointIsOnCurrentMap(point: MapPoint | undefined): boolean {
+  return !!point && point.building === selectedBuilding.value.id && point.floor === selectedFloor.value.id
+}
+
+function buildingLabel(id: string): string {
+  return buildings.find(building => building.id === id)?.label ?? id
+}
+
+function segmentInstruction(segment: RouteSegment, index: number): string {
+  const next = routeSegments.value[index + 1]
+  if (!next) return targetPoint.value?.label ?? 'Точка назначения'
+  if (segment.building !== next.building) return `Переход в ${buildingLabel(next.building)}`
+  if (segment.floor !== next.floor) return `Лестница → этаж ${next.floor}`
+  return 'Продолжить маршрут'
+}
+
+function showRouteSegment(segment: RouteSegment) {
+  const building = buildings.find(item => item.id === segment.building)
+  const floor = floors.find(item => item.id === segment.floor)
+  if (!building || !floor) return
+  selectedBuilding.value = building
+  selectedFloor.value = floor
+  resetVB()
+  haptic.tap()
+}
+
 function svgRoutePath(): string {
-  if (routePath.value.length < 2) return ''
-  const pts = routePath.value.map(id => allPoints.find(p => p.id === id)!).filter(Boolean)
-  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+  if (currentRoutePoints.value.length < 2) return ''
+  return currentRoutePoints.value.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
 }
 
 function selectPoint(id: string) {
@@ -268,6 +360,7 @@ function selectPoint(id: string) {
 
 function defaultStart(bId: string, fId: number): string {
   if (bId === 'b1' && fId === 2) return 'b1f2_start'
+  if (bId === 'b2' && fId === 1) return 'B2-E01'
   return 'start'
 }
 function changeBuilding(b: typeof buildings[0]) {
@@ -294,6 +387,7 @@ const DEFAULT_VIEW_BOX: MapViewBox = { x: 0, y: 0, w: 1190.55, h: 841.89 }
 const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
   b1_1: { w: 1190.55, h: 841.89 },
   b1_2: { w: 1190.55, h: 841.89 },
+  b2_1: { w: 1190.55, h: 841.89 },
 }
 // У планов одинаковый холст, но второй этаж ниже по видимой геометрии.
 // Начальное кадрирование 1.10× выравнивает их воспринимаемый размер,
@@ -301,6 +395,7 @@ const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
 const INITIAL_VIEW_BOXES: Record<string, MapViewBox> = {
   b1_1: DEFAULT_VIEW_BOX,
   b1_2: { x: 54.07, y: 38.24, w: 1082.40, h: 765.41 },
+  b2_1: DEFAULT_VIEW_BOX,
 }
 const floorKey = computed(() => `${selectedBuilding.value.id}_${selectedFloor.value.id}`)
 const floorDims = computed(() => {
@@ -487,17 +582,9 @@ function selectSheetPoint(point: MapPoint) {
     return
   }
 
-  const building = buildings.find(item => item.id === point.building)
-  const floor = floors.find(item => item.id === point.floor)
-  if (building && floor && (building.id !== selectedBuilding.value.id || floor.id !== selectedFloor.value.id)) {
-    selectedBuilding.value = building
-    selectedFloor.value = floor
-    startId.value = defaultStart(building.id, floor.id)
-    targetId.value = null
-    resetVB()
-  }
-
   if (point.id !== startId.value) targetId.value = point.id
+  const firstSegment = routeSegments.value[0]
+  if (firstSegment) showRouteSegment(firstSegment)
   destinationSearch.value = ''
   showPointsList.value = false
   haptic.tap()
@@ -808,16 +895,30 @@ function roomStrokeOpacity(id: string): number {
             <text x="1005" y="480" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Бухгалтерия</text>
           </template>
 
+          <!-- ═══ КОРПУС 2 · ЭТАЖ 1 · ВРЕМЕННАЯ СХЕМА ═══ -->
+          <template v-if="selectedBuilding.id === 'b2' && selectedFloor.id === 1">
+            <rect x="760" y="235" width="320" height="145"
+              :fill="roomFill('B2-P01','')" :stroke="roomStroke('B2-P01','')"
+              :stroke-width="roomStrokeWidth('B2-P01')" :stroke-opacity="roomStrokeOpacity('B2-P01')"
+              style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('B2-P01')"/>
+            <text x="920" y="300" text-anchor="middle" font-size="17" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Условная точка</text>
+            <text x="920" y="323" text-anchor="middle" font-size="17" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Корпуса 2</text>
+            <text x="920" y="345" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif" font-weight="700" style="pointer-events:none">Временное назначение</text>
+          </template>
+
           <!-- ═══ МАРШРУТ ═══ -->
-          <path v-if="routePath.length > 1"
+          <path v-if="currentRoutePoints.length > 1"
             :d="svgRoutePath()"
             fill="none" stroke="#0079C2" stroke-width="3"
             stroke-linecap="round" stroke-linejoin="round"
             stroke-dasharray="10 6" class="route-anim"
           />
 
+          <circle v-for="point in routeBoundaryPoints" :key="`boundary-${point.id}`"
+            :cx="point.x" :cy="point.y" r="12" fill="#f59e0b" stroke="white" stroke-width="4"/>
+
           <!-- ═══ МАРКЕР СТАРТА ═══ -->
-          <template v-if="startPoint">
+          <template v-if="startPoint && pointIsOnCurrentMap(startPoint)">
             <circle :cx="startPoint.x" :cy="startPoint.y" r="20" fill="#0079C2" stroke="white" stroke-width="4"/>
             <circle :cx="startPoint.x" :cy="startPoint.y" r="8"  fill="white"/>
             <rect :x="startPoint.x - 42" :y="startPoint.y - 50" width="84" height="28" rx="14" fill="white" stroke="#c8d5e8" stroke-width="1.5"/>
@@ -825,7 +926,7 @@ function roomStrokeOpacity(id: string): number {
           </template>
 
           <!-- ═══ МАРКЕР ЦЕЛИ ═══ -->
-          <template v-if="targetPoint">
+          <template v-if="targetPoint && pointIsOnCurrentMap(targetPoint)">
             <circle :cx="targetPoint.x" :cy="targetPoint.y" r="36" fill="rgba(0,121,194,0.12)" class="pulse-anim"/>
             <path
               :transform="`translate(${targetPoint.x - 14}, ${targetPoint.y - 34})`"
@@ -850,6 +951,24 @@ function roomStrokeOpacity(id: string): number {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         Все места назначения
         <span class="nav-page__points-count">{{ destinationPoints.length }}</span>
+      </button>
+    </div>
+
+    <div v-if="routeSegments.length > 1" class="nav-page__route-steps">
+      <div class="nav-page__route-steps-head">
+        <span>Участки маршрута</span>
+        <small>{{ routeSegments.length }}</small>
+      </div>
+      <button v-for="(segment, index) in routeSegments" :key="segment.key"
+        class="nav-page__route-step"
+        :class="{ 'is-active': currentRouteSegment?.key === segment.key }"
+        @click="showRouteSegment(segment)">
+        <span class="nav-page__route-step-index">{{ index + 1 }}</span>
+        <span class="nav-page__route-step-text">
+          <strong>{{ buildingLabel(segment.building) }} · Этаж {{ segment.floor }}</strong>
+          <small>{{ segmentInstruction(segment, index) }}</small>
+        </span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
 
@@ -1043,6 +1162,41 @@ function roomStrokeOpacity(id: string): number {
   background: var(--c-accent-dim); color: var(--c-accent);
   font-size: 11px; font-weight: 700;
 }
+
+/* Участки маршрута между этажами и корпусами */
+.nav-page__route-steps {
+  margin: var(--gap-sm) var(--gap-md) 0; padding: var(--gap-sm);
+  background: var(--c-surface); border: 1px solid var(--c-border);
+  border-radius: var(--r-xl); box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nav-page__route-steps-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 2px 6px 6px; color: var(--c-text-2);
+  font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+}
+.nav-page__route-steps-head small {
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-full);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--c-bg-2); color: var(--c-text-3); font-size: 11px;
+}
+.nav-page__route-step {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border: 1px solid transparent; border-radius: var(--r-lg);
+  background: transparent; color: var(--c-text-2); cursor: pointer;
+  text-align: left; font-family: var(--font-body);
+}
+.nav-page__route-step.is-active { background: var(--c-accent-dim); border-color: #bfdbfe; color: var(--c-accent); }
+.nav-page__route-step-index {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-bg-2); color: var(--c-text-2); font-size: 12px; font-weight: 700;
+}
+.nav-page__route-step.is-active .nav-page__route-step-index { background: var(--c-accent); color: #fff; }
+.nav-page__route-step-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.nav-page__route-step-text strong { font-size: var(--fs-sm); font-weight: 700; }
+.nav-page__route-step-text small { font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__route-step > svg { flex-shrink: 0; }
 
 /* placeholder for removed picker — kept for structural clarity */
 .nav-page__picker-item {
