@@ -73,7 +73,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="emp-table__phone">{{ emp.phone }}</td>
+                <td class="emp-table__phone">{{ employeeLogin(emp) }}</td>
                 <td class="emp-table__dept">{{ emp.department || '—' }}</td>
                 <td class="emp-table__role-cell">{{ roleLabel(emp.role) }}</td>
                 <td><span class="status-badge" :class="'status--' + emp.status.toLowerCase()">{{ statusLabel(emp.status) }}</span></td>
@@ -137,7 +137,7 @@
             <div class="emp-detail__contacts">
               <div class="emp-detail__contact">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                {{ selected.phone }}
+                {{ employeeLogin(selected) }}
               </div>
               <div class="emp-detail__contact" v-if="selected.email">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
@@ -153,10 +153,7 @@
               <div class="emp-detail__info-row"><span>Должность</span><strong>{{ selected.position }}</strong></div>
               <div class="emp-detail__info-row">
                 <span>Руководитель</span>
-                <select class="emp-detail__manager-select" :value="selected.managerId ?? ''" @change="setManager">
-                  <option value="">Не назначен</option>
-                  <option v-for="manager in managerCandidates" :key="manager.id" :value="manager.id">{{ manager.name }}</option>
-                </select>
+                <strong>{{ managerName(selected.managerId) }}</strong>
               </div>
               <div class="emp-detail__info-row"><span>Дата приёма</span><strong>{{ formatDate(selected.hireDate) }}</strong></div>
               <div class="emp-detail__info-row"><span>Последний вход</span><strong>{{ selected.lastLogin }}</strong></div>
@@ -172,28 +169,26 @@
             <div class="emp-detail__section">
               <p class="emp-detail__section-title">Адаптационная программа</p>
               <div class="emp-detail__adaptation-card">
-                <p class="emp-detail__adaptation-name">Введение в систему и процессы</p>
+                <p class="emp-detail__adaptation-name">{{ adaptationName(selected) }}</p>
                 <div class="adapt-cell__bar" style="width:100%;margin:6px 0"><div class="adapt-cell__fill" :style="{ width: adaptPct(selected) + '%', background: adaptColor(selected) }" /></div>
-                <p class="emp-detail__adaptation-due">Срок: {{ formatDate(addDays(selected.hireDate, 30)) }}</p>
-              </div>
-            </div>
-            <div class="emp-detail__section">
-              <p class="emp-detail__section-title">Роли и доступы</p>
-              <div class="emp-detail__role-tags">
-                <span class="emp-detail__role-tag">{{ roleLabel(selected.role) }}</span>
+                <p class="emp-detail__adaptation-due">Срок: {{ adaptationDeadline(selected) }}</p>
               </div>
             </div>
             <div class="emp-detail__section">
               <p class="emp-detail__section-title">Действия</p>
               <div class="emp-detail__actions">
-                <button class="emp-detail__action emp-detail__action--primary">Редактировать</button>
+                <button class="emp-detail__action emp-detail__action--primary" @click="openEdit">Редактировать карточку</button>
                 <button class="emp-detail__action emp-detail__action--secondary" @click="resetPassword">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                   Сформировать новый пароль
                 </button>
-                <button class="emp-detail__action emp-detail__action--danger" @click="toggleBlock">
+                <button v-if="selected.status !== 'ARCHIVED'" class="emp-detail__action emp-detail__action--danger" @click="toggleBlock">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   {{ selected.status === 'BLOCKED' ? 'Разблокировать' : 'Заблокировать' }}
+                </button>
+                <button class="emp-detail__action emp-detail__action--secondary" @click="toggleArchive">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                  {{ selected.status === 'ARCHIVED' ? 'Вернуть из архива' : 'В архив' }}
                 </button>
               </div>
             </div>
@@ -245,6 +240,53 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
+
+    <!-- Модал редактирования карточки -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showEditModal" class="add-modal-overlay" @click.self="closeEdit">
+          <div class="add-modal">
+            <div class="add-modal__header">
+              <h2>Редактировать карточку</h2>
+              <button class="emp-detail__close" @click="closeEdit">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="add-modal__body">
+              <div class="add-modal__field"><label>ФИО *</label><input v-model="editEmp.name" placeholder="Иванов Иван Иванович" /></div>
+              <div class="add-modal__field"><label>Телефон / логин *</label><input v-model="editEmp.phone" placeholder="+7 (999) 999-99-99" type="tel" /></div>
+              <div class="add-modal__field"><label>Email</label><input v-model="editEmp.email" placeholder="ivanov@servicegas.ru" type="email" /></div>
+              <div class="add-modal__field"><label>Должность</label><input v-model="editEmp.position" placeholder="Инженер" /></div>
+              <div class="add-modal__field">
+                <label>Подразделение</label>
+                <select v-model="editEmp.department">
+                  <option value="">Не указано</option>
+                  <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+                </select>
+              </div>
+              <div class="add-modal__field">
+                <label>Роль</label>
+                <select v-model="editEmp.role">
+                  <option value="EMPLOYEE">Сотрудник</option>
+                  <option value="HR">HR-менеджер</option>
+                </select>
+              </div>
+              <div class="add-modal__field">
+                <label>Руководитель</label>
+                <select v-model="editEmp.managerId">
+                  <option value="">Не назначен</option>
+                  <option v-for="manager in editManagerCandidates" :key="manager.id" :value="manager.id">{{ manager.name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="add-modal__footer">
+              <button class="add-modal__cancel" @click="closeEdit">Отмена</button>
+              <button class="add-modal__save" :disabled="!editEmp.name.trim() || !editEmp.phone.trim()" @click="saveEmployee">Сохранить карточку</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </Teleport>
 
     <!-- Модал сброса пароля -->
@@ -331,6 +373,7 @@ import { useToast } from '@/shared/composables/useToast'
 import { useEmployeesStore } from '@/store/employees'
 import { useAdaptationStore } from '@/store/adaptation'
 import { employeeLogin } from '@/shared/utils/employeeCredentials'
+import { normalizePhone } from '@/shared/utils/normalizePhone'
 
 const toast = useToast()
 const empStore = useEmployeesStore()
@@ -345,14 +388,16 @@ const filterAdapt = ref('')
 const page = ref(1)
 const perPage = ref(10)
 const showAddModal = ref(false)
+const showEditModal = ref(false)
 const newEmp = reactive({ name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE' as UserRole, managerId: '' })
+const editEmp = reactive({ id: '', name: '', phone: '', email: '', position: '', department: '', role: 'EMPLOYEE' as UserRole, managerId: '' })
 
 const departments = computed(() =>
   [...new Set(employees.value.map(e => e.department).filter(Boolean))].sort() as string[]
 )
 
 const availableManagers = computed(() => employees.value.filter(e => e.status !== 'ARCHIVED'))
-const managerCandidates = computed(() => availableManagers.value.filter(e => e.id !== selected.value?.id))
+const editManagerCandidates = computed(() => availableManagers.value.filter(e => e.id !== editEmp.id))
 
 function adaptPct(emp: Employee) {
   const plan = adaptStore.findByEmployeeId(emp.id)
@@ -406,6 +451,11 @@ watch([search, filterDept, filterRole, filterStatus, filterAdapt], () => { page.
 function resetFilters() { search.value = ''; filterDept.value = ''; filterRole.value = ''; filterStatus.value = ''; filterAdapt.value = '' }
 function selectEmployee(emp: Employee) { selected.value = selected.value?.id === emp.id ? null : emp }
 
+function managerName(managerId?: string) {
+  if (!managerId) return 'Не назначен'
+  return employees.value.find(e => e.id === managerId)?.name ?? 'Не назначен'
+}
+
 function toggleBlock() {
   if (!selected.value) return
   const newStatus = selected.value.status === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED'
@@ -414,12 +464,12 @@ function toggleBlock() {
   toast.success(newStatus === 'BLOCKED' ? 'Доступ заблокирован' : 'Доступ восстановлен')
 }
 
-function setManager(event: Event) {
+function toggleArchive() {
   if (!selected.value) return
-  const managerId = (event.target as HTMLSelectElement).value || undefined
-  empStore.updateEmployee(selected.value.id, { managerId })
-  selected.value = { ...selected.value, managerId }
-  toast.success(managerId ? 'Руководитель назначен' : 'Руководитель снят')
+  const newStatus = selected.value.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED'
+  empStore.updateEmployee(selected.value.id, { status: newStatus })
+  selected.value = { ...selected.value, status: newStatus }
+  toast.success(newStatus === 'ARCHIVED' ? 'Сотрудник перенесён в архив' : 'Сотрудник возвращён из архива')
 }
 
 function initials(name: string) { return name.split(' ').map(w => w[0]).slice(0, 2).join('') }
@@ -430,8 +480,60 @@ function statusLabel(s: string) { return ({ ACTIVE: 'Активен', INVITED: '
 function formatDate(d: string) { if (!d) return '—'; return new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
 function addDays(date: string, days: number) { if (!date) return ''; const d = new Date(date); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0] }
 
+function adaptationName(emp: Employee) {
+  return adaptStore.findByEmployeeId(emp.id)?.programName ?? 'Программа не назначена'
+}
+
+function adaptationDeadline(emp: Employee) {
+  const plan = adaptStore.findByEmployeeId(emp.id)
+  if (plan?.deadline) return plan.deadline
+  return emp.hireDate ? formatDate(addDays(emp.hireDate, 30)) : '—'
+}
+
 const newCredentialsInfo = ref<{ name: string; login: string; password: string } | null>(null)
 const resetPasswordInfo = ref<{ name: string; login: string; password: string } | null>(null)
+
+function openEdit() {
+  if (!selected.value) return
+  Object.assign(editEmp, {
+    id: selected.value.id,
+    name: selected.value.name,
+    phone: employeeLogin(selected.value),
+    email: selected.value.email,
+    position: selected.value.position,
+    department: selected.value.department,
+    role: selected.value.role,
+    managerId: selected.value.managerId ?? '',
+  })
+  showEditModal.value = true
+}
+
+function closeEdit() {
+  showEditModal.value = false
+}
+
+function saveEmployee() {
+  if (!editEmp.id || !editEmp.name.trim() || !editEmp.phone.trim()) return
+  const duplicate = empStore.findByPhone(editEmp.phone)
+  if (duplicate && duplicate.id !== editEmp.id) {
+    toast.warning('Этот номер телефона уже зарегистрирован')
+    return
+  }
+  const patch = {
+    name: editEmp.name.trim(),
+    phone: normalizePhone(editEmp.phone),
+    email: editEmp.email.trim(),
+    position: editEmp.position.trim(),
+    department: editEmp.department,
+    role: editEmp.role,
+    managerId: editEmp.managerId || undefined,
+  }
+  empStore.updateEmployee(editEmp.id, patch)
+  const updated = empStore.employees.find(e => e.id === editEmp.id)
+  selected.value = updated ?? selected.value
+  showEditModal.value = false
+  toast.success('Карточка сотрудника обновлена')
+}
 
 function resetPassword() {
   if (!selected.value) return
@@ -529,7 +631,7 @@ function addEmployee() {
 .emp-detail__info-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid #f3f4f6; font-size: 12px; gap: 8px; }
 .emp-detail__info-row:last-child { border-bottom: none; }
 .emp-detail__info-row > span:first-child { color: #9ca3af; flex-shrink: 0; }
-.emp-detail__info-row strong { color: #111827; font-weight: 600; text-align: right; }
+.emp-detail__info-row strong { color: #111827; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 .emp-detail__manager-select { max-width: 170px; padding: 5px 8px; border: 1px solid #dbe1e8; border-radius: 6px; background: #fff; color: #111827; font: 600 12px var(--font-body); }
 .emp-detail__adapt { display: flex; align-items: center; gap: 6px; }
 .emp-detail__section-title { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
@@ -549,7 +651,7 @@ function addEmployee() {
 .detail-panel-enter-active, .detail-panel-leave-active { transition: all 0.25s ease; }
 .detail-panel-enter-from, .detail-panel-leave-to { opacity: 0; transform: translateX(24px); }
 .add-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 600; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
-.add-modal { background: #fff; border-radius: 14px; width: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+.add-modal { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
 .add-modal__header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #f3f4f6; }
 .add-modal__header h2 { font-size: 16px; font-weight: 700; color: #111827; }
 .add-modal__body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; }

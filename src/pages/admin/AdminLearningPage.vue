@@ -186,7 +186,7 @@
                   <span class="enroll-name">{{ emp.name }}</span>
                   <span class="enroll-dept">{{ emp.department }} · {{ emp.phone }}</span>
                 </div>
-                <button class="btn btn--primary btn--xs">+ Записать</button>
+                <button class="btn btn--primary btn--xs" @click.stop="addEnrollment(emp)">+ Записать</button>
               </div>
             </div>
             <div v-else-if="enrollSearch.trim() && availableToAdd.length === 0" class="enroll-empty-hint">

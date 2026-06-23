@@ -68,10 +68,10 @@
             <div v-for="dept in deptBreakdown" :key="dept.name" class="dept-row">
               <span class="dept-row__name">{{ dept.name }}</span>
               <div class="dept-row__bar-wrap">
-                <div class="dept-row__bar" :style="{ width: (dept.count / totalEmployees * 100) + '%', background: dept.color }"></div>
+                <div class="dept-row__bar" :style="{ width: pct(dept.count, totalEmployees) + '%', background: dept.color }"></div>
               </div>
               <span class="dept-row__count">{{ dept.count }}</span>
-              <span class="dept-row__pct">{{ Math.round(dept.count / totalEmployees * 100) }}%</span>
+              <span class="dept-row__pct">{{ pct(dept.count, totalEmployees) }}%</span>
             </div>
           </div>
         </div>
@@ -80,14 +80,25 @@
           <div class="donut-wrap">
             <svg viewBox="0 0 120 120" class="donut">
               <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" stroke-width="18" />
-              <circle cx="60" cy="60" r="45" fill="none" stroke="#0079C2" stroke-width="18" stroke-dasharray="212.1 282.7" stroke-dashoffset="70.7" stroke-linecap="round" />
-              <circle cx="60" cy="60" r="45" fill="none" stroke="#22c55e" stroke-width="18" stroke-dasharray="42.4 282.7" stroke-dashoffset="-141.4" stroke-linecap="round" />
-              <circle cx="60" cy="60" r="45" fill="none" stroke="#ef4444" stroke-width="18" stroke-dasharray="28.3 282.7" stroke-dashoffset="-183.8" stroke-linecap="round" />
+              <circle
+                v-for="segment in statusSegments"
+                :key="segment.label"
+                cx="60"
+                cy="60"
+                r="45"
+                fill="none"
+                :stroke="segment.color"
+                stroke-width="18"
+                :stroke-dasharray="`${segment.length} ${statusCircumference - segment.length}`"
+                :stroke-dashoffset="-segment.offset"
+                stroke-linecap="round"
+              />
             </svg>
             <div class="donut-legend">
-              <div class="donut-legend__item"><span class="donut-legend__dot" style="background:#0079C2"></span><span>Активны (96)</span></div>
-              <div class="donut-legend__item"><span class="donut-legend__dot" style="background:#22c55e"></span><span>Адаптация (19)</span></div>
-              <div class="donut-legend__item"><span class="donut-legend__dot" style="background:#ef4444"></span><span>Заблокированы (13)</span></div>
+              <div v-for="item in statusLegend" :key="item.label" class="donut-legend__item">
+                <span class="donut-legend__dot" :style="{ background: item.color }"></span>
+                <span>{{ item.label }} ({{ item.count }})</span>
+              </div>
             </div>
           </div>
         </div>
@@ -117,9 +128,9 @@
     <!-- Адаптация -->
     <div v-if="activeTab === 'adaptation'" class="tab-content">
       <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-card__icon" style="background:#e0f2fe;color:#0369a1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">87%</span><span class="kpi-card__label">Успешно адаптированы</span><span class="kpi-card__delta kpi-card__delta--up">+5%</span></div></div>
-        <div class="kpi-card"><div class="kpi-card__icon" style="background:#fef9c3;color:#a16207"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">32 дня</span><span class="kpi-card__label">Средний срок адаптации</span><span class="kpi-card__delta kpi-card__delta--down">+3 дня</span></div></div>
-        <div class="kpi-card"><div class="kpi-card__icon" style="background:#fee2e2;color:#b91c1c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">3</span><span class="kpi-card__label">Просрочено</span><span class="kpi-card__delta kpi-card__delta--down">+1</span></div></div>
+        <div class="kpi-card"><div class="kpi-card__icon" style="background:#e0f2fe;color:#0369a1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">{{ adaptationSuccessPct }}%</span><span class="kpi-card__label">Успешно адаптированы</span><span class="kpi-card__delta kpi-card__delta--up">{{ adaptationCompletedCount }} завершено</span></div></div>
+        <div class="kpi-card"><div class="kpi-card__icon" style="background:#fef9c3;color:#a16207"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">{{ averageAdaptationDays }}</span><span class="kpi-card__label">Средний срок программы</span><span class="kpi-card__delta kpi-card__delta--down">по активным планам</span></div></div>
+        <div class="kpi-card"><div class="kpi-card__icon" style="background:#fee2e2;color:#b91c1c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="kpi-card__body"><span class="kpi-card__val">{{ adaptationOverdueCount }}</span><span class="kpi-card__label">Просрочено</span><span class="kpi-card__delta kpi-card__delta--down">требует контроля</span></div></div>
       </div>
       <div class="chart-section">
         <h2 class="chart-section__title">Прогресс по программам адаптации</h2>
@@ -140,19 +151,30 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { onboardingTasks } from '@/api/mockData'
+import type { Employee } from '@/api/mockData'
+import { useEmployeesStore } from '@/store/employees'
+import { useAdaptationStore } from '@/store/adaptation'
 
 const period = ref('Июнь 2026')
 const activeTab = ref('summary')
 const tabs = [{ key: 'summary', label: 'Сводка' }, { key: 'turnover', label: 'Текучесть' }, { key: 'adaptation', label: 'Адаптация' }]
+const empStore = useEmployeesStore()
+const adaptStore = useAdaptationStore()
 
 const iconSvg = (d: string) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">${d}</svg>`
 
-const kpis = [
-  { label: 'Всего сотрудников', value: '128', delta: 3, unit: '', color: '#0079C2', icon: iconSvg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>') },
+const visibleEmployees = computed(() => empStore.employees.filter(e => e.status !== 'ARCHIVED'))
+const adaptationCompletedCount = computed(() => visibleEmployees.value.filter(emp => employeeAdaptPct(emp) === 100).length)
+const adaptationOverdueCount = computed(() => visibleEmployees.value.filter(emp => adaptStore.findByEmployeeId(emp.id)?.status === 'overdue').length)
+const adaptationSuccessPct = computed(() => pct(adaptationCompletedCount.value, visibleEmployees.value.length))
+
+const kpis = computed(() => [
+  { label: 'Всего сотрудников', value: String(visibleEmployees.value.length), delta: 0, unit: '', color: '#0079C2', icon: iconSvg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>') },
   { label: 'Принято в этом месяце', value: '7', delta: 2, unit: '', color: '#22c55e', icon: iconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>') },
   { label: 'Уволено', value: '3', delta: -1, unit: '', color: '#ef4444', icon: iconSvg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>') },
   { label: 'Уровень текучести', value: '8.2%', delta: -0.5, unit: '%', color: '#f59e0b', icon: iconSvg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>') },
-]
+])
 
 const hiringData = [
   { month: 'Янв', value: 4 }, { month: 'Фев', value: 6 }, { month: 'Мар', value: 9 }, { month: 'Апр', value: 5 },
@@ -160,14 +182,18 @@ const hiringData = [
 ]
 const maxHiring = computed(() => Math.max(...hiringData.map(b => b.value)))
 
-const deptBreakdown = [
-  { name: 'Производство', count: 45, color: '#0079C2' },
-  { name: 'IT', count: 22, color: '#8b5cf6' },
-  { name: 'HR', count: 12, color: '#22c55e' },
-  { name: 'Бухгалтерия', count: 18, color: '#f59e0b' },
-  { name: 'Прочие', count: 31, color: '#9ca3af' },
-]
-const totalEmployees = computed(() => deptBreakdown.reduce((s, d) => s + d.count, 0))
+const COLORS = ['#0079C2', '#8b5cf6', '#22c55e', '#f59e0b', '#14b8a6', '#ec4899', '#9ca3af']
+const deptBreakdown = computed(() => {
+  const groups = new Map<string, number>()
+  for (const emp of visibleEmployees.value) {
+    const dept = emp.department || 'Без подразделения'
+    groups.set(dept, (groups.get(dept) ?? 0) + 1)
+  }
+  return [...groups.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count], idx) => ({ name, count, color: COLORS[idx % COLORS.length] }))
+})
+const totalEmployees = computed(() => deptBreakdown.value.reduce((s, d) => s + d.count, 0))
 
 const turnoverData = [
   { dept: 'Производство', hired: 4, fired: 3, rate: 6.7, avgTenure: '2 года 4 мес.' },
@@ -177,12 +203,78 @@ const turnoverData = [
   { dept: 'Прочие', hired: 0, fired: 2, rate: 16.4, avgTenure: '11 мес.' },
 ]
 
-const adaptPrograms = [
-  { name: 'Онбординг разработчика', pct: 65, count: 4 },
-  { name: 'Онбординг HR-специалиста', pct: 100, count: 3 },
-  { name: 'Адаптация инженера', pct: 30, count: 6 },
-  { name: 'Онбординг менеджера', pct: 80, count: 5 },
-]
+const adaptPrograms = computed(() => {
+  const groups = new Map<string, { progress: number; count: number }>()
+  for (const plan of adaptStore.plans) {
+    const group = groups.get(plan.programName) ?? { progress: 0, count: 0 }
+    group.progress += plan.progress
+    group.count += 1
+    groups.set(plan.programName, group)
+  }
+  return [...groups.entries()].map(([name, data]) => ({
+    name,
+    pct: data.count ? Math.round(data.progress / data.count) : 0,
+    count: data.count,
+  }))
+})
+
+const averageAdaptationDays = computed(() => {
+  const spans = adaptStore.plans
+    .map(plan => {
+      const start = parsePlanDate(plan.startDate)
+      const end = parsePlanDate(plan.deadline)
+      if (!start || !end) return 0
+      return Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    })
+    .filter(Boolean)
+  if (!spans.length) return '—'
+  return `${Math.round(spans.reduce((sum, days) => sum + days, 0) / spans.length)} дней`
+})
+
+function employeeAdaptPct(emp: Employee) {
+  const plan = adaptStore.findByEmployeeId(emp.id)
+  if (plan) {
+    if (!plan.tasks.length) return plan.progress
+    return Math.round((plan.tasks.filter(task => task.done).length / plan.tasks.length) * 100)
+  }
+  if (!emp.onboardingProgress || onboardingTasks.length === 0) return 0
+  return Math.round((emp.onboardingProgress.length / onboardingTasks.length) * 100)
+}
+
+function pct(value: number, total: number) {
+  return total ? Math.round((value / total) * 100) : 0
+}
+
+function parsePlanDate(value: string) {
+  if (!value || value === '—') return null
+  if (value.includes('-')) {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+  const [day, month, year] = value.split('.').map(Number)
+  if (!day || !month || !year) return null
+  return new Date(year, month - 1, day)
+}
+
+const statusLegend = computed(() => [
+  { label: 'Активны', color: '#0079C2', count: empStore.employees.filter(e => e.status === 'ACTIVE').length },
+  { label: 'Приглашены', color: '#22c55e', count: empStore.employees.filter(e => e.status === 'INVITED').length },
+  { label: 'Заблокированы', color: '#ef4444', count: empStore.employees.filter(e => e.status === 'BLOCKED').length },
+  { label: 'Архив', color: '#9ca3af', count: empStore.employees.filter(e => e.status === 'ARCHIVED').length },
+])
+const statusCircumference = 2 * Math.PI * 45
+const statusSegments = computed(() => {
+  const total = statusLegend.value.reduce((sum, item) => sum + item.count, 0)
+  let offset = 0
+  return statusLegend.value
+    .filter(item => item.count > 0 && total > 0)
+    .map(item => {
+      const length = (item.count / total) * statusCircumference
+      const segment = { ...item, length, offset }
+      offset += length
+      return segment
+    })
+})
 
 function exportXlsx() {
   const rows: (string | number)[][] = [['Отдел','Принято','Уволено','Текучесть,%','Средний стаж']]

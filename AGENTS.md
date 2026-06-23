@@ -38,3 +38,11 @@
 2. The employee marks their own adaptation tasks only in the dedicated "Моя адаптация" section. Profile and admin adaptation progress must use the same plan data when a plan exists.
 3. The direct manager is assigned by an administrator while creating or updating the employee card. The profile uses that assignment for the manager quick contact when it is available.
 4. Keep the current quick-contact composition and presentation unchanged until the user defines the production contact list.
+
+## Current admin panel roadmap
+
+1. The employee card is the single source of truth for employee profile data, login phone number, role, manager assignment, access blocking, password recovery, and archive status.
+2. Do not duplicate employee access management inside system settings. Settings may describe policies and link to the employee card or roles section, but must not provide a parallel employee access list.
+3. Admin dashboard, sidebar badges, and reports must use the same current employee, adaptation, document, and learning stores as the employee-facing interface where those stores already exist.
+4. Admin UI controls must be readable and explicitly clickable. Buttons that look actionable must either perform the action or show a clear placeholder message when the production integration is intentionally not connected yet.
+5. Keep the existing employee-facing flows unchanged unless the user explicitly asks to change them.
