@@ -1,5 +1,14 @@
 # Project working agreements
 
+## Documentation contract
+
+- `AGENTS.md` is the top-level working agreement for Codex and other agents.
+- `docs/UI_GUIDE.md` fixes shared UI/layout rules.
+- `docs/PAGE_CONTRACTS.md` fixes the purpose, source of truth, and non-negotiable behavior of each major page.
+- `docs/NAVIGATION_SPEC.md` fixes the indoor-navigation data model, route rules, transition rules, and approved navigation UI.
+- Before changing a page, read the relevant contract document and keep the change inside that scope.
+- If a user request conflicts with a documented rule, follow the user's explicit request and update the relevant document in the same change so the contract stays current.
+
 ## Scope and preservation
 
 - Preserve all implemented product behavior, architecture, visual decisions, data flows, and integrations unless the user explicitly requests a change to them.
@@ -7,6 +16,7 @@
 - Do not invent requirements, labels, business rules, room names, routes, or missing product decisions. Ask the user when required information is absent or ambiguous.
 - Make the smallest targeted change that completes the currently agreed roadmap step.
 - Keep unrelated files and user changes untouched.
+- Do not commit local scratch files such as `.agent.md` unless the user explicitly asks.
 
 ## Roadmap discipline
 
@@ -14,16 +24,21 @@
 - Do not start a later roadmap step until the current step is reviewed or the user explicitly asks to continue.
 - Before implementation, separate confirmed facts from assumptions. Do not implement assumptions as facts.
 - Verify the affected behavior and run the relevant existing checks without expanding the task into unrelated cleanup.
+- For UI/layout changes, verify the affected page against `docs/UI_GUIDE.md` and `docs/PAGE_CONTRACTS.md`.
+- For navigation changes, verify route behavior against `docs/NAVIGATION_SPEC.md`.
 
 ## Current navigation roadmap
 
 1. Completed: prepare a separate numbered reference map for the second floor without changing the working navigation screen.
 2. Completed: collect and confirm the user's mapping between assigned room IDs and real room names/types.
-3. Implemented locally, pending review: add room boundaries, labels, and clickable areas by analogy with the first floor.
-4. Implemented locally and validated: confirmed doors and corridor nodes are connected to the second-floor route graph; all 11 destinations are reachable, and the unused F2-D01B opening is excluded.
+3. Completed and deployed: add room boundaries, labels, and clickable areas by analogy with the first floor.
+4. Completed and deployed: confirmed doors and corridor nodes are connected to the second-floor route graph; all 11 destinations are reachable, and the unused F2-D01B opening is excluded.
 5. Completed and deployed: provide one searchable destination list derived from all user-facing `allPoints` entries across buildings and floors; service route nodes and start points remain excluded.
 6. Completed and confirmed: prepare a separate numbered reference map of first-floor transition nodes without changing the working navigation screen or route graph. F1-S01 maps to F2-S01, F1-S02 maps to F2-S02, and F1-B01 is the confirmed first-floor passage from Building 1 to Building 2.
 7. Current temporary implementation, explicitly authorized by the user: use a clearly labelled first-floor Building 2 placeholder with B2-E01 linked to F1-B01 and one test destination B2-P01. Use it to validate segmented cross-floor/cross-building routing. Replace only the placeholder map, coordinates, nodes, and edges after the user supplies the real Building 2 plan; do not treat temporary geometry as fact.
+8. Completed and deployed: navigation UI uses map-first indoor-navigation layout: search and object switch at the top, floor selector on the left, zoom on the right, and one bottom route card.
+9. Completed and deployed: inter-building transitions must be explicitly marked; the confirmed F1-B01 to B2-E01 transition is marked, and the Building 1 floor 1 changing-room/toilet/shower block keeps the `Вход через Корпус 2` access note.
+10. Completed and deployed: room numbers are not shown directly on the map; room numbers may remain in data, search metadata, and reference documents.
 
 ## Current authentication roadmap
 
