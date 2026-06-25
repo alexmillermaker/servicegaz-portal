@@ -254,7 +254,7 @@ function fileIcon(title: string): { bg: string; color: string; ext: string } {
 }
 
 /* ── Список ── */
-.docs-page__list { padding: 0 var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-md); }
+.docs-page__list { padding: 0 var(--gap-md) var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-md); }
 
 .docs-page__skeleton {
   height: 90px;

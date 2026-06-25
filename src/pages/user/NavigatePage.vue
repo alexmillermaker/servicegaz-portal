@@ -12,9 +12,23 @@ const sheetSwipe = useSwipeDismiss(() => { showPointsList.value = false })
 const { unreadCount } = useNotifications()
 const showNotifications = ref(false)
 
-const buildings = [
-  { id: 'b1', label: 'Корпус 1', sub: 'Главный корпус' },
-  { id: 'b2', label: 'Корпус 2', sub: 'Производственный' },
+interface BuildingOption {
+  id: string
+  label: string
+  sub: string
+  short: string
+  overview?: boolean
+}
+
+const buildings: BuildingOption[] = [
+  { id: 'site', label: 'Общая карта', sub: 'Вся территория', short: 'Объект', overview: true },
+  { id: 'b1', label: 'Корпус 1', sub: 'Главный корпус', short: 'К1' },
+  { id: 'b2', label: 'Корпус 2', sub: 'Производственный', short: 'К2' },
+  { id: 'b3', label: 'Корпус 3', sub: 'Здание 3', short: 'К3' },
+  { id: 'b4', label: 'Корпус 4', sub: 'Здание 4', short: 'К4' },
+  { id: 'b5', label: 'Корпус 5', sub: 'Здание 5', short: 'К5' },
+  { id: 'b6', label: 'Корпус 6', sub: 'Здание 6', short: 'К6' },
+  { id: 'b7', label: 'Корпус 7', sub: 'Здание 7', short: 'К7' },
 ]
 const floors = [
   { id: 1, label: 'Этаж 1' },
@@ -123,13 +137,16 @@ const allPoints: MapPoint[] = [
   { id: 'c_sec',        x: 1006, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_tr2',           x: 807,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_hall',          x: 815,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_meeting_entry', x: 842,  y: 336, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_meeting_entry', x: 815,  y: 336, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_med_jct',       x: 1001, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  { id: 'd_medic',         x: 1001, y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'd_medic',         x: 815,  y: 254, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_tdept',      x: 718,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_tech_dept',  x: 720,  y: 443, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_tr1',        x: 760,  y: 443, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_left',       x: 407,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_wc_m',       x: 546,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_wc_f',       x: 592,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'c_locker_f',   x: 688,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_top',        x: 523,  y: 323, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_far_left',   x: 213,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_otiz',       x: 151,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
@@ -141,6 +158,11 @@ const allPoints: MapPoint[] = [
   { id: 'F1-JS02', x: 883, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-S02',  x: 883, y: 500, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-B01',  x: 812, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  // Вход в блок раздевалок и санузлов 1 этажа подтверждён через переход к Корпусу 2.
+  { id: 'F1-SAN-F',  x: 688, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-SAN-WF', x: 592, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-SAN-WM', x: 546, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
+  { id: 'F1-SAN-M',  x: 395, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   // ── Корпус 2, Этаж 1 — временная схема до загрузки плана ───
   { id: 'B2-E01', x: 180, y: 420, label: 'Вход из Корпуса 1', room: 'Временная схема', category: 'start', floor: 1, building: 'b2' },
   { id: 'B2-C01', x: 595, y: 420, label: '', room: '', category: 'corridor', floor: 1, building: 'b2' },
@@ -157,7 +179,10 @@ const edges: [string, string][] = [
   ['c_far_left',   'c_design_jct'],
   ['c_design_jct', 'F1-JS01'],
   ['F1-JS01',      'c_left'],
-  ['c_left',       'c_tdept'],
+  ['c_left',       'c_wc_m'],
+  ['c_wc_m',       'c_wc_f'],
+  ['c_wc_f',       'c_locker_f'],
+  ['c_locker_f',   'c_tdept'],
   ['c_tdept',      'c_tr2'],
   ['c_tr2',        'F1-JS02'],
   ['F1-JS02',      'c_right'],
@@ -172,13 +197,25 @@ const edges: [string, string][] = [
   ['c_tr2',        'd_hall'],
   ['d_hall',       'd_meeting_entry'],
   ['d_hall',       'F1-B01'],
-  ['c_med_jct',    'd_medic'],
+  ['d_meeting_entry', 'd_medic'],
   ['F1-JS01',      'F1-S01'],
   ['F1-JS02',      'F1-S02'],
   // ── Комнаты → узлы ───────────────────────────────────────────
   ['start',      'start_door'],
   ['otiz',       'd_otiz'],
   ['design',     'd_design'],
+  // Блок раздевалок и санузлов 1 этажа: вход через переход к Корпусу 2.
+  ['F1-B01',     'F1-SAN-F'],
+  ['F1-SAN-F',   'F1-SAN-WF'],
+  ['F1-SAN-WF',  'F1-SAN-WM'],
+  ['F1-SAN-WM',  'F1-SAN-M'],
+  ['locker_m',   'F1-SAN-M'],
+  ['wc_m',       'F1-SAN-WM'],
+  ['shower_m',   'F1-SAN-WM'],
+  ['wc_f',       'F1-SAN-WF'],
+  ['wc_f_bottom','F1-SAN-WF'],
+  ['shower_f',   'F1-SAN-WF'],
+  ['locker_f',   'F1-SAN-F'],
   ['meeting',    'd_meeting_entry'],
   ['medic',      'd_medic'],
   ['security',   'c_sec'],
@@ -256,18 +293,15 @@ function findPath(from: string, to: string): string[] {
   return []
 }
 
-// Комнаты, доступные только со стороны Корпуса 2 — маршрут не строится
-const BUILDING2_ACCESS = new Set(['locker_m', 'locker_f', 'wc_m', 'wc_f', 'wc_f_bottom', 'shower_m', 'shower_f'])
-
 const targetId  = ref<string | null>(null)
 const startId   = ref('start')
 
 const targetPoint = computed(() => allPoints.find(p => p.id === targetId.value))
 const startPoint  = computed(() => allPoints.find(p => p.id === startId.value))
-const isBuilding2Target = computed(() => !!targetId.value && BUILDING2_ACCESS.has(targetId.value))
+const isProductionOverview = computed(() => selectedBuilding.value.overview === true)
 
 const routePath = computed<string[]>(() =>
-  targetId.value && !isBuilding2Target.value ? findPath(startId.value, targetId.value) : []
+  targetId.value ? findPath(startId.value, targetId.value) : []
 )
 
 interface RouteSegment {
@@ -276,6 +310,27 @@ interface RouteSegment {
   floor: number
   pointIds: string[]
 }
+
+interface PointAccessNotice {
+  title: string
+  text: string
+}
+
+interface TransferMarker {
+  key: string
+  x: number
+  y: number
+  label: string
+}
+
+const BUILDING2_ACCESS_IDS = ['locker_m', 'locker_f', 'wc_m', 'wc_f', 'wc_f_bottom', 'shower_m', 'shower_f']
+const POINT_ACCESS_NOTICES: Record<string, PointAccessNotice> = BUILDING2_ACCESS_IDS.reduce((acc, id) => {
+  acc[id] = {
+    title: 'Вход через Корпус 2',
+    text: 'Это помещение доступно со стороны соседнего корпуса.',
+  }
+  return acc
+}, {} as Record<string, PointAccessNotice>)
 
 function pointMapKey(point: MapPoint): string {
   return `${point.building}_${point.floor}`
@@ -313,6 +368,17 @@ const routeBoundaryPoints = computed(() => {
   return [points[0], points[points.length - 1]].filter(point => point.id !== startId.value && point.id !== targetId.value)
 })
 
+const hasActiveRoute = computed(() => routePath.value.length > 1)
+const currentRouteSegmentIndex = computed(() =>
+  routeSegments.value.findIndex(segment => segment.key === `${selectedBuilding.value.id}_${selectedFloor.value.id}`)
+)
+const currentSegmentNumber = computed(() => currentRouteSegmentIndex.value >= 0 ? currentRouteSegmentIndex.value + 1 : 0)
+const nextRouteSegment = computed(() => {
+  if (!routeSegments.value.length) return null
+  const currentIndex = currentRouteSegmentIndex.value >= 0 ? currentRouteSegmentIndex.value : 0
+  return routeSegments.value[currentIndex + 1] ?? null
+})
+
 function pointIsOnCurrentMap(point: MapPoint | undefined): boolean {
   return !!point && point.building === selectedBuilding.value.id && point.floor === selectedFloor.value.id
 }
@@ -321,13 +387,109 @@ function buildingLabel(id: string): string {
   return buildings.find(building => building.id === id)?.label ?? id
 }
 
+function pointAccessNotice(point: MapPoint | undefined | null): PointAccessNotice | null {
+  if (!point) return null
+  const explicitNotice = POINT_ACCESS_NOTICES[point.id]
+  if (explicitNotice) return explicitNotice
+  if (!isProductionOverview.value && point.building !== selectedBuilding.value.id) {
+    return {
+      title: `Точка в ${buildingLabel(point.building)}`,
+      text: `${buildingLabel(point.building)} · ${point.floor} этаж`,
+    }
+  }
+  return null
+}
+
+const targetAccessNotice = computed(() => pointAccessNotice(targetPoint.value))
+const startAccessNotice = computed(() => pointAccessNotice(startPoint.value))
+
+const transferMarkers = computed<TransferMarker[]>(() => {
+  if (isProductionOverview.value) return []
+
+  const currentBuilding = selectedBuilding.value.id
+  const currentFloor = selectedFloor.value.id
+  const markers: TransferMarker[] = []
+  const seen = new Set<string>()
+
+  for (const [fromId, toId] of edges) {
+    const from = allPoints.find(point => point.id === fromId)
+    const to = allPoints.find(point => point.id === toId)
+    if (!from || !to || from.building === to.building) continue
+
+    for (const [point, neighbor] of [[from, to], [to, from]] as [MapPoint, MapPoint][]) {
+      if (point.building !== currentBuilding || point.floor !== currentFloor) continue
+      const key = `${point.id}-${neighbor.building}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      markers.push({
+        key,
+        x: point.x,
+        y: point.y,
+        label: `Переход в ${buildingLabel(neighbor.building)}`,
+      })
+    }
+  }
+
+  return markers
+})
+
+const currentMapLabel = computed(() =>
+  isProductionOverview.value ? 'Общая карта производства' : `${buildingLabel(selectedBuilding.value.id)} · ${selectedFloor.value.label}`
+)
+
+const currentMapHint = computed(() =>
+  isProductionOverview.value
+    ? 'Выберите корпус на общей схеме или найдите место через поиск'
+    : 'Коснитесь помещения на карте или найдите точку через поиск'
+)
+
+const routeStatusLabel = computed(() => {
+  if (!targetId.value) return 'Навигация готова'
+  if (!routePath.value.length) return 'Маршрут не связан'
+  return routeSegments.value.length > 1 ? 'Маршрут по участкам' : 'Маршрут построен'
+})
+
+function pluralRu(value: number, one: string, few: string, many: string): string {
+  const mod10 = value % 10
+  const mod100 = value % 100
+  if (mod10 === 1 && mod100 !== 11) return one
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few
+  return many
+}
+
+const routeSegmentsCountLabel = computed(() =>
+  `${routeSegments.value.length} ${pluralRu(routeSegments.value.length, 'участок', 'участка', 'участков')}`
+)
+
 function segmentInstruction(segment: RouteSegment, index: number): string {
   const next = routeSegments.value[index + 1]
-  if (!next) return targetPoint.value?.label ?? 'Точка назначения'
-  if (segment.building !== next.building) return `Переход в ${buildingLabel(next.building)}`
-  if (segment.floor !== next.floor) return `Лестница → этаж ${next.floor}`
-  return 'Продолжить маршрут'
+  if (!next) return targetPoint.value ? `Финиш: ${targetPoint.value.label}` : 'Точка назначения'
+  if (segment.building !== next.building) return `Дойти до перехода в ${buildingLabel(next.building)}`
+  if (segment.floor !== next.floor) return `Дойти до лестницы и перейти на этаж ${next.floor}`
+  return 'Продолжить маршрут по этому корпусу'
 }
+
+const routeGuideTitle = computed(() => {
+  if (!targetId.value) return 'Выберите, куда нужно попасть'
+  if (!routePath.value.length) return 'Для этой точки пока нет маршрута'
+  if (!currentRouteSegment.value) return 'Откройте участок маршрута'
+  if (routeSegments.value.length <= 1) return 'Маршрут на текущей карте'
+  return `Участок ${currentSegmentNumber.value} из ${routeSegments.value.length}`
+})
+
+const routeGuideText = computed(() => {
+  if (!targetId.value) return 'Сначала проверьте стартовую точку, затем найдите кабинет, цех или помещение через поиск по всем корпусам и этажам.'
+  if (!routePath.value.length) return 'Точка есть в списке, но она ещё не связана с коридором или переходом. Нужно добавить маршрутный узел.'
+  if (!currentRouteSegment.value) return 'Выберите нужный участок ниже: маршрут сохранится, а карта переключится на выбранный корпус и этаж.'
+  return segmentInstruction(currentRouteSegment.value, currentRouteSegmentIndex.value)
+})
+
+const routePrimaryLabel = computed(() => {
+  if (!targetId.value) return 'Выберите точку назначения'
+  if (!routePath.value.length) return 'Маршрут не найден'
+  if (!currentRouteSegment.value) return 'Показать первый участок'
+  return routeSegments.value.length > 1 ? `Показать участок ${currentSegmentNumber.value}` : 'Показать маршрут'
+})
 
 function showRouteSegment(segment: RouteSegment) {
   const building = buildings.find(item => item.id === segment.building)
@@ -339,9 +501,41 @@ function showRouteSegment(segment: RouteSegment) {
   haptic.tap()
 }
 
+function focusRoute() {
+  const segment = currentRouteSegment.value ?? routeSegments.value[0]
+  if (!segment) return
+  showRouteSegment(segment)
+  showPointsList.value = false
+  haptic.light()
+}
+
+function showNextRouteSegment() {
+  if (!nextRouteSegment.value) return
+  showRouteSegment(nextRouteSegment.value)
+}
+
+function changeBuildingById(id: string) {
+  const building = buildings.find(item => item.id === id)
+  if (building) changeBuilding(building)
+}
+
 function svgRoutePath(): string {
-  if (currentRoutePoints.value.length < 2) return ''
-  return currentRoutePoints.value.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  const points = currentRoutePoints.value
+  if (points.length < 2) return ''
+
+  const commands = [`M ${points[0].x} ${points[0].y}`]
+  for (let index = 1; index < points.length; index += 1) {
+    const from = points[index - 1]
+    const to = points[index]
+    if (from.x !== to.x && from.y !== to.y) {
+      const midX = (from.x + to.x) / 2
+      commands.push(`L ${midX} ${from.y}`)
+      commands.push(`L ${midX} ${to.y}`)
+    }
+    commands.push(`L ${to.x} ${to.y}`)
+  }
+
+  return commands.join(' ')
 }
 
 function selectPoint(id: string) {
@@ -349,8 +543,18 @@ function selectPoint(id: string) {
   if (selectingStart.value) {
     startId.value = id
     selectingStart.value = false
-    targetId.value = null
+    if (targetId.value === id) targetId.value = null
     showPointsList.value = false
+    const point = allPoints.find(item => item.id === id)
+    if (point) {
+      const building = buildings.find(item => item.id === point.building)
+      const floor = floors.find(item => item.id === point.floor)
+      if (building && floor) {
+        selectedBuilding.value = building
+        selectedFloor.value = floor
+        resetVB()
+      }
+    }
     return
   }
   if (id === startId.value) return
@@ -367,15 +571,13 @@ function changeBuilding(b: typeof buildings[0]) {
   selectedBuilding.value = b
   selectedFloor.value = floors[0]
   showBuildingPicker.value = false
-  targetId.value = null
-  startId.value = defaultStart(b.id, floors[0].id)
+  if (!targetId.value) startId.value = defaultStart(b.id, floors[0].id)
   resetVB()
 }
 function changeFloor(f: typeof floors[0]) {
   selectedFloor.value = f
   showFloorPicker.value = false
-  targetId.value = null
-  startId.value = defaultStart(selectedBuilding.value.id, f.id)
+  if (!targetId.value) startId.value = defaultStart(selectedBuilding.value.id, f.id)
   resetVB()
 }
 
@@ -446,6 +648,7 @@ function zoomAround(newZoom: number, pivotX?: number, pivotY?: number) {
 }
 function zoomIn()  { zoomAround(zoom.value + 0.25); haptic.tap() }
 function zoomOut() { zoomAround(zoom.value - 0.25); haptic.tap() }
+function resetMapView() { resetVB(); haptic.tap() }
 
 // ── Mouse drag ────────────────────────────────────────────────
 let _mp = { x: 0, y: 0 }
@@ -516,41 +719,64 @@ const destinationPoints = computed(() =>
   allPoints.filter(p => p.label && p.category !== 'corridor' && p.category !== 'start')
 )
 
+const startPoints = computed(() =>
+  allPoints.filter(p => p.label && p.category !== 'corridor')
+)
+
 function normalizeSearch(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replaceAll('ё', 'е').trim()
 }
 
-const filteredDestinationPoints = computed(() => {
-  const query = normalizeSearch(destinationSearch.value)
+function pointMatchesSearch(point: MapPoint, query: string): boolean {
+  if (!query) return true
+  const building = buildings.find(item => item.id === point.building)
+  const searchableFields = [
+    point.label,
+    point.room,
+    categoryLabels[point.category] ?? '',
+    building?.label ?? point.building,
+    `этаж ${point.floor}`,
+    `${point.floor} этаж`,
+  ]
+  return searchableFields.some(field => normalizeSearch(field).includes(query))
+}
+
+function sortMapPoints(a: MapPoint, b: MapPoint): number {
   const currentBuildingId = selectedBuilding.value.id
   const currentFloorId = selectedFloor.value.id
+  const aCurrent = a.building === currentBuildingId && a.floor === currentFloorId ? 0 : 1
+  const bCurrent = b.building === currentBuildingId && b.floor === currentFloorId ? 0 : 1
+  if (aCurrent !== bCurrent) return aCurrent - bCurrent
+  if (a.building !== b.building) return a.building.localeCompare(b.building, 'ru-RU')
+  if (a.floor !== b.floor) return a.floor - b.floor
+  return a.label.localeCompare(b.label, 'ru-RU')
+}
+
+const filteredDestinationPoints = computed(() => {
+  const query = normalizeSearch(destinationSearch.value)
 
   return destinationPoints.value
-    .filter(point => {
-      if (!query) return true
-      const building = buildings.find(item => item.id === point.building)
-      const searchableFields = [
-        point.label,
-        point.room,
-        categoryLabels[point.category] ?? '',
-        building?.label ?? point.building,
-        `этаж ${point.floor}`,
-        `${point.floor} этаж`,
-      ]
-      return searchableFields.some(field => normalizeSearch(field).includes(query))
-    })
-    .sort((a, b) => {
-      const aCurrent = a.building === currentBuildingId && a.floor === currentFloorId ? 0 : 1
-      const bCurrent = b.building === currentBuildingId && b.floor === currentFloorId ? 0 : 1
-      if (aCurrent !== bCurrent) return aCurrent - bCurrent
-      if (a.building !== b.building) return a.building.localeCompare(b.building, 'ru-RU')
-      if (a.floor !== b.floor) return a.floor - b.floor
-      return a.label.localeCompare(b.label, 'ru-RU')
-    })
+    .filter(point => pointMatchesSearch(point, query))
+    .sort(sortMapPoints)
+})
+
+const filteredStartPoints = computed(() => {
+  const query = normalizeSearch(destinationSearch.value)
+  return startPoints.value
+    .filter(point => pointMatchesSearch(point, query))
+    .sort(sortMapPoints)
 })
 
 const sheetPoints = computed(() =>
-  selectingStart.value ? visiblePoints.value : filteredDestinationPoints.value
+  selectingStart.value ? filteredStartPoints.value : filteredDestinationPoints.value
+)
+
+const sheetTitle = computed(() =>
+  selectingStart.value ? `Стартовая точка · ${startPoints.value.length}` : `Места назначения · ${destinationPoints.value.length}`
+)
+
+const sheetSearchPlaceholder = computed(() =>
+  selectingStart.value ? 'Где вы сейчас: кабинет, этаж, корпус…' : 'Название, кабинет, этаж…'
 )
 
 function pointMeta(point: MapPoint): string {
@@ -568,6 +794,12 @@ function pointMeta(point: MapPoint): string {
 function openDestinationPicker() {
   destinationSearch.value = ''
   selectingStart.value = false
+  showPointsList.value = true
+}
+
+function openStartPicker() {
+  destinationSearch.value = ''
+  selectingStart.value = true
   showPointsList.value = true
 }
 
@@ -606,7 +838,7 @@ function pointIcon(cat: string): string {
 }
 
 const hasMapForCurrentView = computed(() =>
-  allPoints.some(p => p.floor === selectedFloor.value.id && p.building === selectedBuilding.value.id && p.category !== 'corridor')
+  isProductionOverview.value || allPoints.some(p => p.floor === selectedFloor.value.id && p.building === selectedBuilding.value.id && p.category !== 'corridor')
 )
 
 const currentMapImage = computed(() => `${import.meta.env.BASE_URL}maps/${selectedBuilding.value.id}_floor${selectedFloor.value.id}.svg`)
@@ -637,22 +869,6 @@ function roomStrokeOpacity(id: string): number {
     <AppPageHeader subtitle="UNITorg SG · СЕРВИСГАЗ" bell :badge-count="unreadCount" @bell-click="showNotifications = true" />
     <AppNotificationsDrawer :open="showNotifications" @close="showNotifications = false" />
 
-    <div class="nav-page__top">
-      <h1 class="nav-page__title">Навигация</h1>
-    </div>
-
-    <div class="nav-page__buildings">
-      <button
-        v-for="b in buildings" :key="b.id"
-        class="nav-page__bchip"
-        :class="{ 'is-active': selectedBuilding.id === b.id }"
-        @click="changeBuilding(b)"
-      >
-        <span class="nav-page__bchip-label">{{ b.label }}</span>
-        <span class="nav-page__bchip-sub">{{ b.sub }}</span>
-      </button>
-    </div>
-
     <!-- Карта -->
     <div class="nav-page__map-container"
       ref="mapContainerRef"
@@ -661,14 +877,47 @@ function roomStrokeOpacity(id: string): number {
       @touchstart="onMapTouchStart" @touchmove.prevent="onMapTouchMove" @touchend="onMapTouchEnd"
     >
 
+      <div class="nav-page__map-controls" @mousedown.stop @touchstart.stop>
+        <div class="nav-page__map-search-row">
+          <button class="nav-page__map-search" type="button" @click="openDestinationPicker">
+            <span class="nav-page__map-search-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <span class="nav-page__map-search-text">
+              <strong>{{ targetPoint?.label ?? 'Куда идти?' }}</strong>
+              <small>{{ targetPoint ? pointMeta(targetPoint) : 'Поиск кабинета, цеха, этажа или корпуса' }}</small>
+            </span>
+          </button>
+          <button v-if="targetId" class="nav-page__map-clear" type="button" aria-label="Сбросить точку назначения" @click="clearDestination">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="nav-page__map-buildings" role="group" aria-label="Корпус или общая карта">
+          <button
+            v-for="b in buildings" :key="b.id"
+            class="nav-page__map-building"
+            :class="{ 'is-active': selectedBuilding.id === b.id }"
+            type="button"
+            @click="changeBuilding(b)"
+          >
+            {{ b.short }}
+          </button>
+        </div>
+      </div>
+
       <!-- Floor pills (left overlay) -->
-      <div class="nav-page__floors" @mousedown.stop @touchstart.stop>
+      <div v-if="!isProductionOverview" class="nav-page__floors" @mousedown.stop @touchstart.stop>
         <button
           v-for="f in floors" :key="f.id"
           class="nav-page__fpill"
           :class="{ 'is-active': selectedFloor.id === f.id }"
+          type="button"
+          :aria-label="`Показать ${f.label}`"
           @click="changeFloor(f)"
-        >{{ f.id }}</button>
+        >
+          <span>{{ f.id }}</span>
+        </button>
       </div>
 
       <div v-if="!hasMapForCurrentView" class="nav-page__no-map">
@@ -679,7 +928,52 @@ function roomStrokeOpacity(id: string): number {
       <div v-else class="nav-page__map-inner">
         <svg :viewBox="svgViewBox" class="nav-page__svg" xmlns="http://www.w3.org/2000/svg">
           <!-- Архитектурный план (фон) — рендерится в натуральном разрешении через viewBox -->
-          <image :href="currentMapImage" x="0" y="0" :width="floorDims.w" :height="floorDims.h"/>
+          <image v-if="!isProductionOverview" :href="currentMapImage" x="0" y="0" :width="floorDims.w" :height="floorDims.h"/>
+
+          <!-- ═══ ОБЩАЯ КАРТА ПРОИЗВОДСТВА · ВРЕМЕННАЯ СХЕМА ═══ -->
+          <template v-if="isProductionOverview">
+            <rect x="40" y="70" width="1110" height="670" rx="34" fill="#f8fafc" stroke="#c8d5e8" stroke-width="3"/>
+            <path d="M130 455 H1040" stroke="#cbd5e1" stroke-width="34" stroke-linecap="round"/>
+            <path d="M595 205 V675" stroke="#cbd5e1" stroke-width="28" stroke-linecap="round"/>
+            <text x="595" y="185" text-anchor="middle" font-size="26" fill="#0f172a" font-family="sans-serif" font-weight="800" style="pointer-events:none">Общая карта производства</text>
+            <text x="595" y="214" text-anchor="middle" font-size="14" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Схема территории под 7 корпусов · временный обзор до загрузки точного генплана</text>
+
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b1')">
+              <rect x="130" y="255" width="230" height="140" rx="18" :fill="selectedBuilding.id === 'b1' ? '#dbeafe' : '#ffffff'" stroke="#0079C2" stroke-width="3"/>
+              <text x="245" y="320" text-anchor="middle" font-size="22" fill="#075985" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 1</text>
+              <text x="245" y="349" text-anchor="middle" font-size="13" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Главный корпус</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b2')">
+              <rect x="415" y="255" width="230" height="140" rx="18" :fill="selectedBuilding.id === 'b2' ? '#dbeafe' : '#ffffff'" stroke="#0079C2" stroke-width="3"/>
+              <text x="530" y="320" text-anchor="middle" font-size="22" fill="#075985" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 2</text>
+              <text x="530" y="349" text-anchor="middle" font-size="13" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Производственный</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b3')">
+              <rect x="770" y="255" width="230" height="140" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+              <text x="885" y="320" text-anchor="middle" font-size="22" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 3</text>
+              <text x="885" y="349" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b4')">
+              <rect x="130" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+              <text x="235" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 4</text>
+              <text x="235" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b5')">
+              <rect x="390" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+              <text x="495" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 5</text>
+              <text x="495" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b6')">
+              <rect x="650" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+              <text x="755" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 6</text>
+              <text x="755" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            </g>
+            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b7')">
+              <rect x="910" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+              <text x="1015" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 7</text>
+              <text x="1015" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            </g>
+          </template>
 
           <!-- ═══ КОРПУС 1 · ЭТАЖ 1 ═══ -->
           <template v-if="selectedBuilding.id === 'b1' && selectedFloor.id === 1">
@@ -692,7 +986,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('design')" :stroke-opacity="roomStrokeOpacity('design')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('design')"/>
           <text x="182" y="292" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Конструктор-</text>
           <text x="182" y="309" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ский отдел</text>
-          <text x="182" y="324" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 103</text>
 
           <!-- Мужская раздевалка -->
           <polygon points="269,228 520,228 520,387 269,387"
@@ -700,7 +993,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('locker_m')" :stroke-opacity="roomStrokeOpacity('locker_m')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_m')"/>
           <text x="395" y="293" text-anchor="middle" font-size="17" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мужская</text>
           <text x="395" y="312" text-anchor="middle" font-size="17" fill="#6d28d9" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="395" y="328" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 104</text>
 
           <!-- Мужской санузел -->
           <polygon points="526,269 566,269 566,342 526,342"
@@ -738,14 +1030,12 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('locker_f')" :stroke-opacity="roomStrokeOpacity('locker_f')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('locker_f')"/>
           <text x="688" y="312" text-anchor="middle" font-size="16" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">Женская</text>
           <text x="688" y="330" text-anchor="middle" font-size="16" fill="#9d174d" font-family="sans-serif" font-weight="700" style="pointer-events:none">раздевалка</text>
-          <text x="688" y="345" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 106</text>
 
           <!-- Переговорная -->
           <polygon points="842,285 998,285 998,387 842,387"
             :fill="roomFill('meeting','')" :stroke="roomStroke('meeting','')"
             :stroke-width="roomStrokeWidth('meeting')" :stroke-opacity="roomStrokeOpacity('meeting')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('meeting')"/>
           <text x="920" y="329" text-anchor="middle" font-size="15" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Переговорная</text>
-          <text x="920" y="345" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 108</text>
 
           <!-- Мед кабинет (L-образный) -->
           <polygon points="842,228 1085,228 1085,278 1096,278 1096,322 1085,322 1085,387 1004,387 1004,279 842,279"
@@ -753,7 +1043,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('medic')" :stroke-opacity="roomStrokeOpacity('medic')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('medic')"/>
           <text x="1044" y="248" text-anchor="middle" font-size="14" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">Мед</text>
           <text x="1044" y="264" text-anchor="middle" font-size="14" fill="#065f46" font-family="sans-serif" font-weight="700" style="pointer-events:none">кабинет</text>
-          <text x="1044" y="277" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 109</text>
 
           <!-- ═══ НИЖНИЙ РЯД ═══ -->
 
@@ -762,7 +1051,6 @@ function roomStrokeOpacity(id: string): number {
             :fill="roomFill('otiz','')" :stroke="roomStroke('otiz','')"
             :stroke-width="roomStrokeWidth('otiz')" :stroke-opacity="roomStrokeOpacity('otiz')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('otiz')"/>
           <text x="151" y="473" text-anchor="middle" font-size="16" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">ОТиЗ</text>
-          <text x="151" y="490" text-anchor="middle" font-size="12" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 101</text>
 
           <!-- Технический директор -->
           <polygon points="347,443 430,443 430,554 347,554"
@@ -770,7 +1058,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('techdir')" :stroke-opacity="roomStrokeOpacity('techdir')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('techdir')"/>
           <text x="388" y="487" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технический</text>
           <text x="388" y="502" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">директор</text>
-          <text x="388" y="516" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 102</text>
 
           <!-- Технологический отдел (L-образный) -->
           <polygon points="435,443 733,443 733,490 837,490 837,553 435,553"
@@ -778,7 +1065,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('tech_dept')" :stroke-opacity="roomStrokeOpacity('tech_dept')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('tech_dept')"/>
           <text x="584" y="487" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Технологический</text>
           <text x="584" y="503" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">отдел</text>
-          <text x="584" y="517" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 201</text>
 
           <!-- Техн. помещение 1 -->
           <polygon points="741,443 778,443 778,485 741,485"
@@ -805,7 +1091,6 @@ function roomStrokeOpacity(id: string): number {
             :stroke-width="roomStrokeWidth('hr')" :stroke-opacity="roomStrokeOpacity('hr')" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('hr')"/>
           <text x="1057" y="490" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Отдел</text>
           <text x="1057" y="505" text-anchor="middle" font-size="13" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">кадров</text>
-          <text x="1057" y="518" text-anchor="middle" font-size="11" fill="#8592a8" font-family="sans-serif" style="pointer-events:none">Каб. 205</text>
 
           <!-- ═══ КОРИДОР ═══ -->
           <text x="580" y="415" text-anchor="middle" font-size="14" fill="#8592a8" font-family="sans-serif" letter-spacing="8" style="pointer-events:none">К О Р И Д О Р</text>
@@ -917,6 +1202,14 @@ function roomStrokeOpacity(id: string): number {
           <circle v-for="point in routeBoundaryPoints" :key="`boundary-${point.id}`"
             :cx="point.x" :cy="point.y" r="12" fill="#f59e0b" stroke="white" stroke-width="4"/>
 
+          <!-- ═══ МЕТКИ МЕЖКОРПУСНЫХ ПЕРЕХОДОВ ═══ -->
+          <g v-for="marker in transferMarkers" :key="marker.key" class="nav-page__transfer-marker">
+            <circle :cx="marker.x" :cy="marker.y" r="17" fill="#eff6ff" stroke="#0079C2" stroke-width="3"/>
+            <text :x="marker.x" :y="marker.y + 5" text-anchor="middle" font-size="15" fill="#0079C2" font-family="sans-serif" font-weight="900" style="pointer-events:none">↔</text>
+            <rect :x="marker.x - 82" :y="marker.y - 56" width="164" height="36" rx="18" fill="#ffffff" stroke="#bfdbfe" stroke-width="2"/>
+            <text :x="marker.x" :y="marker.y - 34" text-anchor="middle" font-size="13" fill="#1d4ed8" font-family="sans-serif" font-weight="800" style="pointer-events:none">{{ marker.label }}</text>
+          </g>
+
           <!-- ═══ МАРКЕР СТАРТА ═══ -->
           <template v-if="startPoint && pointIsOnCurrentMap(startPoint)">
             <circle :cx="startPoint.x" :cy="startPoint.y" r="20" fill="#0079C2" stroke="white" stroke-width="4"/>
@@ -940,96 +1233,70 @@ function roomStrokeOpacity(id: string): number {
 
       <!-- Zoom -->
       <div class="nav-page__zoom" @mousedown.stop @touchstart.stop>
-        <button class="nav-page__zoom-btn" @click="zoomIn"  :disabled="zoom >= 2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="nav-page__zoom-btn" type="button" aria-label="Увеличить карту" @click="zoomIn"  :disabled="zoom >= 2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="nav-page__zoom-sep" />
-        <button class="nav-page__zoom-btn" @click="zoomOut" :disabled="zoom <= baseZoom + 0.001"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="nav-page__zoom-btn" type="button" aria-label="Уменьшить карту" @click="zoomOut" :disabled="zoom <= baseZoom + 0.001"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="nav-page__zoom-sep" />
+        <button class="nav-page__zoom-btn" type="button" aria-label="Вернуть карту к исходному масштабу" @click="resetMapView"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v8h8"/></svg></button>
       </div>
-    </div>
 
-    <div class="nav-page__below-map">
-      <button class="nav-page__points-btn" @click="openDestinationPicker">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Все места назначения
-        <span class="nav-page__points-count">{{ destinationPoints.length }}</span>
-      </button>
-    </div>
-
-    <div v-if="routeSegments.length > 1" class="nav-page__route-steps">
-      <div class="nav-page__route-steps-head">
-        <span>Участки маршрута</span>
-        <small>{{ routeSegments.length }}</small>
-      </div>
-      <button v-for="(segment, index) in routeSegments" :key="segment.key"
-        class="nav-page__route-step"
-        :class="{ 'is-active': currentRouteSegment?.key === segment.key }"
-        @click="showRouteSegment(segment)">
-        <span class="nav-page__route-step-index">{{ index + 1 }}</span>
-        <span class="nav-page__route-step-text">
-          <strong>{{ buildingLabel(segment.building) }} · Этаж {{ segment.floor }}</strong>
-          <small>{{ segmentInstruction(segment, index) }}</small>
-        </span>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-
-    <!-- Информация о маршруте -->
-    <div class="nav-page__route-info">
-      <div class="nav-page__info-card">
-        <span class="nav-page__info-label">Точка назначения</span>
-        <div class="nav-page__info-row">
-          <div class="nav-page__info-icon" :style="targetPoint ? categoryColors[targetPoint.category] : { background: '#f1f5f9', color: '#64748b' }">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" :stroke="targetPoint ? categoryColors[targetPoint.category].color : '#64748b'" stroke-width="1.8" stroke-linecap="round">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
+      <div class="nav-page__bottom-card" :class="{ 'has-target': !!targetId, 'is-active': hasActiveRoute }" @mousedown.stop @touchstart.stop>
+        <template v-if="targetId">
+          <div class="nav-page__route-card-head">
+            <div>
+              <span class="nav-page__route-kicker">{{ routeStatusLabel }}</span>
+              <h2>{{ routeGuideTitle }}</h2>
+              <p>{{ routeGuideText }}</p>
+            </div>
+            <div class="nav-page__route-actions">
+              <button class="nav-page__route-action" type="button" :disabled="routePath.length === 0" @click="focusRoute">
+                {{ routePrimaryLabel }}
+              </button>
+              <button v-if="nextRouteSegment" class="nav-page__route-next" type="button" @click="showNextRouteSegment" aria-label="Следующий участок маршрута">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
           </div>
-          <button class="nav-page__destination-trigger" @click="openDestinationPicker">
-            <span class="nav-page__info-text">
-              <span class="nav-page__info-name">{{ targetPoint?.label ?? 'Найти место назначения' }}</span>
-              <span class="nav-page__info-room">{{ targetPoint ? pointMeta(targetPoint) : 'Поиск по всем корпусам и этажам' }}</span>
-            </span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button v-if="targetId" class="nav-page__destination-clear" aria-label="Сбросить точку назначения" @click="clearDestination">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-      </div>
-      <div class="nav-page__info-card">
-        <span class="nav-page__info-label">Стартовая точка</span>
-        <div class="nav-page__info-row">
-          <div class="nav-page__info-icon" style="background:#dcfce7">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linecap="round">
-              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#15803d"/>
-            </svg>
+
+          <div class="nav-page__route-points">
+            <button type="button" @click="openStartPicker">
+              <span>Откуда</span>
+              <strong>{{ startPoint?.label ?? 'Стартовая точка' }}</strong>
+              <em v-if="startAccessNotice">{{ startAccessNotice.title }}</em>
+            </button>
+            <button type="button" @click="openDestinationPicker">
+              <span>Куда</span>
+              <strong>{{ targetPoint?.label ?? 'Точка назначения' }}</strong>
+              <em v-if="targetAccessNotice">{{ targetAccessNotice.title }}</em>
+            </button>
           </div>
-          <div class="nav-page__info-text">
-            <p class="nav-page__info-name">{{ startPoint?.label ?? 'Вход / Коридор' }}</p>
-            <p class="nav-page__info-room">{{ startPoint?.room ?? 'Коридор' }}</p>
+
+          <div v-if="routeSegments.length > 1" class="nav-page__route-segments" :aria-label="routeSegmentsCountLabel">
+            <button v-for="(segment, index) in routeSegments" :key="segment.key"
+              class="nav-page__route-segment"
+              :class="{ 'is-active': currentRouteSegment?.key === segment.key }"
+              type="button"
+              @click="showRouteSegment(segment)">
+              <span>{{ index + 1 }}</span>
+              <strong>{{ buildingLabel(segment.building) }} · {{ segment.floor }} этаж</strong>
+              <small>{{ segmentInstruction(segment, index) }}</small>
+            </button>
           </div>
-          <button class="nav-page__change-btn" @click="destinationSearch = ''; showPointsList = true; selectingStart = true">Изменить</button>
-        </div>
+        </template>
+
+        <template v-else>
+          <div class="nav-page__idle-card">
+            <div>
+              <span class="nav-page__route-kicker">{{ routeStatusLabel }}</span>
+              <h2>{{ currentMapLabel }}</h2>
+              <p>{{ currentMapHint }}</p>
+            </div>
+            <button class="nav-page__route-action" type="button" @click="openDestinationPicker">
+              Найти место
+            </button>
+          </div>
+        </template>
       </div>
-    </div>
-
-    <div v-if="isBuilding2Target" class="nav-page__building2-notice">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <div>
-        <p class="nav-page__b2-title">Вход через Корпус 2</p>
-        <p class="nav-page__b2-sub">Это помещение доступно только со стороны Корпуса 2 — маршрут по данному этажу не строится.</p>
-      </div>
-    </div>
-
-    <div v-else-if="targetId && routePath.length === 0" class="nav-page__no-route">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Прямой маршрут до этой точки не найден.
-    </div>
-
-    <div class="nav-page__btn-wrap">
-      <button class="nav-page__build-btn" :disabled="!targetId || isBuilding2Target"
-        @click="targetId && !isBuilding2Target && (showPointsList = false, haptic.light())">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        {{ isBuilding2Target ? 'Вход через Корпус 2' : targetId ? `Маршрут: ${targetPoint?.label}` : 'Выберите точку назначения' }}
-      </button>
     </div>
 
     <!-- Bottom sheet: Список точек -->
@@ -1040,20 +1307,20 @@ function roomStrokeOpacity(id: string): number {
           @touchstart="sheetSwipe.onTouchStart" @touchmove="sheetSwipe.onTouchMove" @touchend="sheetSwipe.onTouchEnd">
           <div class="nav-page__sheet-handle" />
           <div class="nav-page__sheet-head">
-            <h3>{{ selectingStart ? 'Выберите стартовую точку' : `Места назначения · ${destinationPoints.length}` }}</h3>
+            <h3>{{ sheetTitle }}</h3>
             <button @click="showPointsList = false; selectingStart = false; destinationSearch = ''">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-          <div v-if="!selectingStart" class="nav-page__sheet-search">
+          <div class="nav-page__sheet-search">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
             <input
               v-model="destinationSearch"
               type="search"
               inputmode="search"
               autocomplete="off"
-              aria-label="Поиск места назначения"
-              placeholder="Название, кабинет, этаж…"
+              :aria-label="selectingStart ? 'Поиск стартовой точки' : 'Поиск места назначения'"
+              :placeholder="sheetSearchPlaceholder"
             />
             <button v-if="destinationSearch" aria-label="Очистить поиск" @click="destinationSearch = ''">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1077,7 +1344,8 @@ function roomStrokeOpacity(id: string): number {
               </div>
               <div>
                 <p class="nav-page__sheet-name">{{ pt.label }}</p>
-                <p class="nav-page__sheet-room">{{ selectingStart ? `${pt.room} · ${categoryLabels[pt.category]}` : pointMeta(pt) }}</p>
+                <p class="nav-page__sheet-room">{{ pointMeta(pt) }}</p>
+                <p v-if="pointAccessNotice(pt)" class="nav-page__sheet-access">{{ pointAccessNotice(pt)?.title }}</p>
               </div>
               <svg v-if="(!selectingStart && targetId === pt.id) || (selectingStart && startId === pt.id)"
                 width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1100,30 +1368,23 @@ function roomStrokeOpacity(id: string): number {
 </template>
 
 <style scoped>
-.nav-page { background: var(--c-bg); min-height: 100dvh; }
-
-.nav-page__top { padding: var(--gap-md) var(--gap-md) var(--gap-sm); }
-.nav-page__title { font-size: var(--fs-xl); font-weight: 700; margin-bottom: var(--gap-sm); }
-
-/* Buildings chips */
-.nav-page__buildings {
-  display: flex; gap: 8px;
-  padding: 0 var(--gap-md) var(--gap-sm);
-  overflow-x: auto; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+.nav-page {
+  background: var(--c-bg);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 8px);
 }
-.nav-page__buildings::-webkit-scrollbar { display: none; }
-.nav-page__bchip {
-  display: flex; flex-direction: column; align-items: flex-start;
-  gap: 1px; padding: 8px 14px; border-radius: var(--r-lg);
-  border: 1.5px solid var(--c-border); background: var(--c-surface);
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
-  font-family: var(--font-body); min-height: var(--touch-min);
-  transition: border-color .15s, background .15s, color .15s;
+
+.nav-page__top {
+  flex: 0 0 auto;
+  padding: 8px var(--gap-md) 6px;
+  display: flex;
+  align-items: center;
 }
-.nav-page__bchip.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
-.nav-page__bchip-label { font-size: var(--fs-sm); font-weight: 600; display: block; }
-.nav-page__bchip-sub { font-size: 10px; display: block; opacity: .7; }
+.nav-page__title { font-size: var(--fs-lg); font-weight: 800; line-height: 1.15; }
 
 /* Floor pills (left overlay) */
 .nav-page__floors {
@@ -1131,7 +1392,7 @@ function roomStrokeOpacity(id: string): number {
   display: flex; flex-direction: column; gap: 5px; z-index: 10;
 }
 .nav-page__fpill {
-  width: 38px; height: 38px; border-radius: var(--r-md);
+  width: 42px; min-height: 42px; border-radius: var(--r-md);
   border: 1.5px solid rgba(200,215,232,.5);
   background: rgba(255,255,255,.35);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -1141,61 +1402,67 @@ function roomStrokeOpacity(id: string): number {
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
   display: flex; align-items: center; justify-content: center;
   opacity: 0.45;
+  line-height: 1;
 }
+.nav-page__fpill span { font-size: var(--fs-sm); font-weight: 900; }
 .nav-page__fpill:hover { opacity: 1; }
 .nav-page__fpill.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; opacity: 1; box-shadow: 0 2px 8px rgba(8,116,186,.35); }
 
-/* Points list button (below map) */
-.nav-page__below-map { margin: var(--gap-sm) var(--gap-md) 0; }
-.nav-page__points-btn {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; height: 40px;
-  background: var(--c-surface); border: 1.5px solid var(--c-border);
-  border-radius: var(--r-lg); font-size: var(--fs-xs); font-weight: 600;
-  color: var(--c-text-2); font-family: var(--font-body); cursor: pointer;
-  transition: border-color .15s, background .15s, color .15s;
-}
-.nav-page__points-btn:active { background: var(--c-accent-dim); border-color: var(--c-accent); color: var(--c-accent); }
-.nav-page__points-count {
-  min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-full);
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--c-accent-dim); color: var(--c-accent);
-  font-size: 11px; font-weight: 700;
-}
-
 /* Участки маршрута между этажами и корпусами */
 .nav-page__route-steps {
-  margin: var(--gap-sm) var(--gap-md) 0; padding: var(--gap-sm);
-  background: var(--c-surface); border: 1px solid var(--c-border);
-  border-radius: var(--r-xl); box-shadow: var(--shadow-sm);
-  display: flex; flex-direction: column; gap: 4px;
+  position: absolute;
+  left: 10px;
+  right: 58px;
+  bottom: 78px;
+  z-index: 12;
+  max-height: 56px;
+  margin: 0; padding: 4px;
+  background: rgba(255,255,255,.94); border: 1px solid rgba(200,215,232,.95);
+  border-radius: var(--r-lg); box-shadow: 0 8px 24px rgba(15,23,42,.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: stretch; gap: 5px;
+  overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.nav-page__route-steps::-webkit-scrollbar { display: none; }
 .nav-page__route-steps-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 2px 6px 6px; color: var(--c-text-2);
-  font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  flex: 0 0 56px;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 2px;
+  padding: 2px 3px; color: var(--c-text-2);
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  line-height: 1.05;
 }
 .nav-page__route-steps-head small {
-  min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-full);
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full);
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--c-bg-2); color: var(--c-text-3); font-size: 11px;
+  background: var(--c-bg-2); color: var(--c-text-3); font-size: 10px;
 }
 .nav-page__route-step {
-  width: 100%; display: flex; align-items: center; gap: 10px;
-  padding: 9px 10px; border: 1px solid transparent; border-radius: var(--r-lg);
-  background: transparent; color: var(--c-text-2); cursor: pointer;
+  flex: 0 0 min(190px, 58vw);
+  width: auto; display: flex; align-items: center; gap: 7px;
+  padding: 5px 6px; border: 1px solid var(--c-border); border-radius: var(--r-md);
+  background: #fff; color: var(--c-text-2); cursor: pointer;
   text-align: left; font-family: var(--font-body);
+  box-shadow: 0 2px 8px rgba(15,23,42,.04);
 }
 .nav-page__route-step.is-active { background: var(--c-accent-dim); border-color: #bfdbfe; color: var(--c-accent); }
 .nav-page__route-step-index {
-  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: var(--c-bg-2); color: var(--c-text-2); font-size: 12px; font-weight: 700;
+  background: var(--c-bg-2); color: var(--c-text-2); font-size: 11px; font-weight: 700;
 }
 .nav-page__route-step.is-active .nav-page__route-step-index { background: var(--c-accent); color: #fff; }
 .nav-page__route-step-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.nav-page__route-step-text strong { font-size: var(--fs-sm); font-weight: 700; }
-.nav-page__route-step-text small { font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__route-step-text strong { font-size: var(--fs-xs); font-weight: 800; }
+.nav-page__route-step-text small {
+  font-size: 10px;
+  color: var(--c-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .nav-page__route-step > svg { flex-shrink: 0; }
 
 /* placeholder for removed picker — kept for structural clarity */
@@ -1213,14 +1480,160 @@ function roomStrokeOpacity(id: string): number {
 
 /* Карта */
 .nav-page__map-container {
-  margin: var(--gap-sm) var(--gap-md) 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 8px var(--gap-sm) 0;
   background: var(--c-surface); border: 1px solid var(--c-border);
   border-radius: var(--r-xl); overflow: hidden; position: relative;
   box-shadow: var(--shadow-sm);
   cursor: grab; user-select: none;
-  aspect-ratio: 1190.55 / 841.89;
+  height: auto;
 }
 .nav-page__map-container.is-dragging { cursor: grabbing; }
+.nav-page__map-controls {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+.nav-page__map-search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.nav-page__map-search {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid rgba(200,215,232,.95);
+  border-radius: var(--r-xl);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 6px 18px rgba(15,23,42,.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.nav-page__map-search-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.nav-page__map-search-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-page__map-search-text strong {
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__map-search-text small {
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__map-clear {
+  width: 46px;
+  min-height: 48px;
+  border-radius: var(--r-xl);
+  border: 1px solid rgba(200,215,232,.95);
+  background: rgba(255,255,255,.94);
+  color: var(--c-text-3);
+  box-shadow: 0 6px 18px rgba(15,23,42,.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-page__map-buildings {
+  height: 36px;
+  width: 100%;
+  max-width: 100%;
+  padding: 3px;
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(200,215,232,.9);
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 3px 12px rgba(15,23,42,.08);
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-page__map-buildings::-webkit-scrollbar { display: none; }
+.nav-page__map-building {
+  min-width: 46px;
+  padding: 0 10px;
+  border: none;
+  border-radius: calc(var(--r-lg) - 4px);
+  background: transparent;
+  color: var(--c-text-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.nav-page__map-building:hover { background: var(--c-bg-2); }
+.nav-page__map-building.is-active {
+  background: var(--c-accent);
+  color: #fff;
+}
+.nav-page__map-badge {
+  position: absolute;
+  left: 10px;
+  right: auto;
+  top: auto;
+  bottom: 10px;
+  z-index: 11;
+  max-width: calc(100% - 70px);
+  padding: 7px 10px;
+  border-radius: var(--r-lg);
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(200,215,232,.9);
+  box-shadow: 0 2px 8px rgba(15,23,42,.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  pointer-events: auto;
+}
+.nav-page__map-badge span {
+  color: var(--c-text-3);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.nav-page__map-badge strong { color: var(--c-text); font-size: var(--fs-xs); font-weight: 800; }
+.nav-page__map-badge small { color: var(--c-accent); font-size: 11px; font-weight: 700; }
 .nav-page__no-map {
   display: flex; flex-direction: column; align-items: center; gap: var(--gap-sm);
   padding: var(--gap-xl) var(--gap-md); color: var(--c-text-3); text-align: center;
@@ -1234,9 +1647,13 @@ function roomStrokeOpacity(id: string): number {
 .pulse-anim { animation: pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
+.nav-page__transfer-marker {
+  pointer-events: none;
+}
+
 /* Zoom (bottom-right overlay) */
 .nav-page__zoom {
-  position: absolute; bottom: 10px; right: 10px;
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
   background: rgba(255,255,255,.88);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid rgba(200,215,232,.85);
@@ -1254,70 +1671,343 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__zoom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .nav-page__zoom-sep { height: 1px; background: rgba(200,215,232,.85); }
 
-/* Инфо маршрута */
-.nav-page__route-info { padding: var(--gap-sm) var(--gap-md) 0; display: flex; flex-direction: column; gap: var(--gap-sm); }
-.nav-page__info-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-xl); padding: var(--gap-md); box-shadow: var(--shadow-sm); }
-.nav-page__info-label { font-size: var(--fs-xs); font-weight: 700; color: var(--c-accent); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: var(--gap-sm); }
-.nav-page__info-row { display: flex; align-items: center; gap: var(--gap-md); }
-.nav-page__info-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.nav-page__info-text { flex: 1; min-width: 0; }
-.nav-page__info-name { display: block; font-size: var(--fs-sm); font-weight: 600; }
-.nav-page__info-room { display: block; font-size: var(--fs-xs); color: var(--c-text-3); }
-.nav-page__destination-trigger {
-  min-width: 0; flex: 1; display: flex; align-items: center; gap: var(--gap-sm);
-  padding: 4px 0; text-align: left; background: transparent; border: none;
-  color: inherit; font-family: var(--font-body); cursor: pointer;
+.nav-page__bottom-card {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 13;
+  padding: 10px;
+  border-radius: var(--r-xl);
+  border: 1px solid rgba(200,215,232,.95);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 10px 28px rgba(15,23,42,.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.nav-page__destination-trigger > svg { color: var(--c-text-3); flex-shrink: 0; }
-.nav-page__destination-clear {
-  width: 34px; height: 34px; border-radius: var(--r-md); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--c-text-3); background: transparent; border: 1px solid var(--c-border);
-  cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
+.nav-page__bottom-card.is-active {
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, rgba(239,246,255,.96) 0%, rgba(255,255,255,.96) 72%);
 }
-.nav-page__destination-clear:active { background: var(--c-bg-2); color: var(--c-text); }
-.nav-page__change-btn {
-  font-size: var(--fs-xs); font-weight: 600; color: var(--c-text-2);
-  border: 1px solid var(--c-border); border-radius: var(--r-md);
-  min-height: 36px; padding: 0 12px; cursor: pointer; font-family: var(--font-body);
-  background: transparent; white-space: nowrap; display: flex; align-items: center;
-  transition: background var(--dur-fast);
+.nav-page__route-card-head,
+.nav-page__idle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
 }
-.nav-page__change-btn:active { background: var(--c-bg-2); }
+.nav-page__route-card-head > div:first-child,
+.nav-page__idle-card > div:first-child {
+  min-width: 0;
+}
+.nav-page__route-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--c-accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.nav-page__bottom-card h2 {
+  margin: 0;
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 900;
+  line-height: 1.16;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__bottom-card p {
+  margin: 2px 0 0;
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.32;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.nav-page__route-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.nav-page__route-action,
+.nav-page__route-next {
+  min-height: 34px;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,121,194,.18);
+}
+.nav-page__route-action {
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.nav-page__route-next {
+  width: 34px;
+  padding: 0;
+}
+.nav-page__route-action:disabled {
+  background: var(--c-bg-2);
+  color: var(--c-text-3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.nav-page__route-points {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+.nav-page__route-points button {
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid rgba(200,215,232,.95);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.78);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.nav-page__route-points span {
+  display: block;
+  color: var(--c-text-3);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.nav-page__route-points strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--c-text);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__route-points em {
+  display: inline-flex;
+  max-width: 100%;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border-radius: var(--r-full);
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__route-segments {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-page__route-segments::-webkit-scrollbar { display: none; }
+.nav-page__route-segment {
+  flex: 0 0 min(210px, 70vw);
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.86);
+  color: var(--c-text-2);
+  cursor: pointer;
+  font-family: var(--font-body);
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 7px;
+  row-gap: 1px;
+  text-align: left;
+  align-items: center;
+}
+.nav-page__route-segment span {
+  grid-row: 1 / span 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-bg-2);
+  color: var(--c-text-2);
+  font-size: 11px;
+  font-weight: 900;
+}
+.nav-page__route-segment strong {
+  min-width: 0;
+  color: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__route-segment small {
+  min-width: 0;
+  color: var(--c-text-3);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__route-segment.is-active {
+  background: var(--c-accent-dim);
+  border-color: #bfdbfe;
+  color: var(--c-accent);
+}
+.nav-page__route-segment.is-active span {
+  background: var(--c-accent);
+  color: #fff;
+}
 
-/* Корпус 2 */
-.nav-page__building2-notice {
-  display: flex; align-items: flex-start; gap: 10px;
-  margin: var(--gap-sm) var(--gap-md) 0;
-  background: #eff6ff; color: #1d4ed8;
-  border: 1px solid #bfdbfe; border-radius: var(--r-lg);
-  padding: var(--gap-md); font-size: var(--fs-sm);
+.nav-page__map-route-panel {
+  position: absolute;
+  left: 10px;
+  right: 58px;
+  bottom: 10px;
+  z-index: 13;
+  padding: 8px;
+  border-radius: var(--r-xl);
+  border: 1px solid rgba(200,215,232,.95);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 24px rgba(15,23,42,.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
-.nav-page__building2-notice svg { flex-shrink: 0; margin-top: 2px; }
-.nav-page__b2-title { font-weight: 700; margin-bottom: 2px; }
-.nav-page__b2-sub { font-size: var(--fs-xs); color: #3b82f6; line-height: 1.4; }
+.nav-page__map-route-panel > div:first-child { min-width: 0; }
+.nav-page__map-route-panel.is-active {
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, rgba(239,246,255,.96) 0%, rgba(255,255,255,.96) 72%);
+}
+.nav-page__map-route-kicker {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--c-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.nav-page__map-route-panel h2 {
+  color: var(--c-text);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  margin-bottom: 1px;
+}
+.nav-page__map-route-panel p {
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.32;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.nav-page__map-route-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.nav-page__map-route-btn,
+.nav-page__map-route-next {
+  min-height: 32px;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-page__map-route-btn {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+.nav-page__map-route-next {
+  width: 32px;
+  padding: 0;
+}
+.nav-page__map-route-btn:disabled {
+  background: var(--c-bg-2);
+  color: var(--c-text-3);
+  cursor: not-allowed;
+}
 
-/* Нет маршрута */
-.nav-page__no-route {
-  display: flex; align-items: center; gap: 8px;
-  margin: var(--gap-sm) var(--gap-md) 0;
-  background: #fff7ed; color: #c2410c;
-  border: 1px solid #fed7aa; border-radius: var(--r-lg);
-  padding: var(--gap-sm) var(--gap-md); font-size: var(--fs-sm); font-weight: 500;
+@media (max-height: 740px) {
+  .nav-page {
+    padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 6px);
+  }
+  .nav-page__top { padding: 6px 12px 4px; }
+  .nav-page__title { font-size: var(--fs-base); }
+  .nav-page__map-container { margin-inline: 8px; border-radius: 16px; }
+  .nav-page__map-controls { left: 8px; right: 8px; top: 8px; gap: 5px; }
+  .nav-page__map-search { min-height: 44px; padding: 6px 10px; }
+  .nav-page__map-search-icon { width: 30px; height: 30px; }
+  .nav-page__map-search-text small { display: none; }
+  .nav-page__map-buildings { height: 32px; }
+  .nav-page__map-building { min-width: 42px; padding: 0 8px; }
+  .nav-page__route-steps {
+    left: 8px;
+    right: 54px;
+    bottom: 74px;
+    max-height: 52px;
+    padding: 4px;
+  }
+  .nav-page__route-step { flex-basis: min(180px, 58vw); padding: 5px 6px; }
+  .nav-page__map-route-panel {
+    left: 8px;
+    right: 54px;
+    bottom: 8px;
+    padding: 8px;
+  }
+  .nav-page__map-route-panel p { -webkit-line-clamp: 1; }
+  .nav-page__zoom { right: 8px; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .nav-page__bottom-card {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 8px;
+    gap: 6px;
+    border-radius: 16px;
+  }
+  .nav-page__bottom-card p { -webkit-line-clamp: 1; }
+  .nav-page__route-points { display: none; }
+  .nav-page__route-action,
+  .nav-page__route-next { min-height: 32px; }
+  .nav-page__route-segment { flex-basis: min(190px, 68vw); padding: 6px 8px; }
 }
-.nav-page__no-route svg { flex-shrink: 0; }
-
-/* Кнопка */
-.nav-page__btn-wrap { padding: var(--gap-md); }
-.nav-page__build-btn {
-  width: 100%; min-height: 52px; background: var(--c-accent); color: #fff;
-  font-size: var(--fs-base); font-weight: 700; border-radius: var(--r-lg);
-  border: none; font-family: var(--font-body); cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: var(--gap-sm);
-  transition: background var(--dur-fast), opacity var(--dur-fast);
-}
-.nav-page__build-btn:active:not(:disabled) { background: #0069aa; }
-.nav-page__build-btn:disabled { background: var(--c-bg-2); color: var(--c-text-3); cursor: not-allowed; }
 
 /* Bottom sheet */
 .nav-page__sheet-overlay {
@@ -1365,6 +2055,20 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__sheet-item > div:nth-child(2) { min-width: 0; flex: 1; }
 .nav-page__sheet-name { font-size: var(--fs-sm); font-weight: 600; }
 .nav-page__sheet-room { font-size: var(--fs-xs); color: var(--c-text-3); }
+.nav-page__sheet-access {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: var(--r-full);
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .nav-page__sheet-empty {
   min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: var(--c-text-3); text-align: center; gap: 6px;
@@ -1379,5 +2083,5 @@ function roomStrokeOpacity(id: string): number {
 .sheet-enter-from .nav-page__sheet, .sheet-leave-to .nav-page__sheet { transform: translateY(100%); }
 .sheet-enter-from, .sheet-leave-to { opacity: 0; }
 
-.nav-spacer { height: 80px; }
+.nav-spacer { display: none; }
 </style>

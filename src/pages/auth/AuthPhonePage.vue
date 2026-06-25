@@ -333,4 +333,14 @@ async function submit() {
 .fade-down-enter-from   { opacity: 0; transform: translateY(-4px); }
 .fade-down-leave-active { transition: all 0.15s; }
 .fade-down-leave-to     { opacity: 0; }
+
+@media (max-height: 740px) {
+  .auth-phone__hero { padding: 28px var(--gap-lg) var(--gap-md); }
+  .auth-phone__sg-logo { height: 48px; }
+  .auth-phone__card { padding: var(--gap-md); gap: var(--gap-md); }
+  .auth-phone__input-wrap,
+  .auth-phone__input,
+  .auth-phone__btn { min-height: 46px; }
+  .auth-phone__footer { padding: var(--gap-sm) var(--gap-lg) var(--gap-md); }
+}
 </style>

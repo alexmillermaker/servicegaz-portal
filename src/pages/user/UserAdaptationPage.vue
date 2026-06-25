@@ -241,7 +241,7 @@ const statusClass = computed(() => {
 .progress-bar__fill { height: 100%; border-radius: var(--r-full); transition: width 0.4s var(--ease-out); }
 
 /* ── Задачи ── */
-.adapt-page__tasks { padding: 0 var(--gap-md); }
+.adapt-page__tasks { padding: 0 var(--gap-md) var(--gap-md); }
 .adapt-page__tasks-title { font-size: var(--fs-md); font-weight: 700; margin-bottom: var(--gap-sm); }
 .adapt-page__tasks-hint { font-size: var(--fs-xs); color: var(--c-text-3); margin: calc(var(--gap-xs) * -1) 0 var(--gap-sm); }
 
