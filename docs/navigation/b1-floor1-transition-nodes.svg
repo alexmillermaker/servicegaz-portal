@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1190.55 841.89" role="img" aria-labelledby="title desc">
+  <title id="title">Корпус 1, первый этаж — кандидаты переходных узлов</title>
+  <desc id="desc">Согласовательная схема двух внутренних лестниц, двух наружных лестничных выходов и подтверждённого перехода во второй корпус. Обозначения не добавлены в рабочий маршрут.</desc>
+
+  <rect width="1190.55" height="841.89" fill="#ffffff"/>
+  <image href="../../public/maps/b1_floor1.svg" x="0" y="0" width="1190.55" height="841.89"/>
+
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="595.275" y="112" fill="#0f172a" font-size="28" font-weight="700">Корпус 1 · Этаж 1</text>
+    <text x="595.275" y="144" fill="#64748b" font-size="17">Кандидаты переходных узлов для согласования</text>
+
+    <!-- Внутренние лестницы: принадлежность этажам пока не подтверждена -->
+    <g fill="none" stroke="#f59e0b" stroke-width="5">
+      <circle cx="306" cy="500" r="43"/>
+      <circle cx="883" cy="500" r="43"/>
+    </g>
+    <g fill="#f59e0b" stroke="#ffffff" stroke-width="4">
+      <rect x="257" y="449" width="98" height="34" rx="17"/>
+      <rect x="834" y="449" width="98" height="34" rx="17"/>
+    </g>
+    <g fill="#ffffff" font-size="14" font-weight="700">
+      <text x="306" y="471">F1-S01</text>
+      <text x="883" y="471">F1-S02</text>
+    </g>
+
+    <!-- Наружные лестничные выходы: назначение пока не подтверждено -->
+    <g fill="none" stroke="#7c3aed" stroke-width="5">
+      <circle cx="230" cy="596" r="45"/>
+      <circle cx="930" cy="596" r="45"/>
+    </g>
+    <g fill="#7c3aed" stroke="#ffffff" stroke-width="4">
+      <rect x="181" y="628" width="98" height="34" rx="17"/>
+      <rect x="881" y="628" width="98" height="34" rx="17"/>
+    </g>
+    <g fill="#ffffff" font-size="14" font-weight="700">
+      <text x="230" y="650">F1-X01</text>
+      <text x="930" y="650">F1-X02</text>
+    </g>
+
+    <!-- Подтверждённый пользователем переход из Корпуса 1 в Корпус 2 -->
+    <circle cx="812" cy="228" r="31" fill="none" stroke="#dc2626" stroke-width="5"/>
+    <rect x="763" y="174" width="98" height="34" rx="17" fill="#dc2626" stroke="#ffffff" stroke-width="4"/>
+    <text x="812" y="196" fill="#ffffff" font-size="14" font-weight="700">F1-B01</text>
+
+    <g transform="translate(176 700)">
+      <rect width="838" height="88" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+      <circle cx="38" cy="28" r="9" fill="#f59e0b"/>
+      <text x="56" y="34" text-anchor="start" fill="#334155" font-size="14">S — внутренняя лестница</text>
+      <circle cx="278" cy="28" r="9" fill="#7c3aed"/>
+      <text x="296" y="34" text-anchor="start" fill="#334155" font-size="14">X — наружный выход</text>
+      <circle cx="508" cy="28" r="9" fill="#dc2626"/>
+      <text x="526" y="34" text-anchor="start" fill="#334155" font-size="14">B — переход в Корпус 2</text>
+      <text x="419" y="66" fill="#64748b" font-size="14">Кандидаты не добавлены в рабочий маршрут до подтверждения</text>
+    </g>
+  </g>
+</svg>

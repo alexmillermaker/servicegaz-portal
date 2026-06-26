@@ -9,7 +9,6 @@ import type { Employee, UserRole } from '@/api/mockData'
 export const useAuthStore = defineStore('auth', () => {
   // ── Состояние ─────────────────────────────────────────────
   const employee = ref<Employee | null>(null)
-  const pendingPhone = ref<string>('')
   const acknowledgedDocs = ref<Set<string>>(new Set())
   const onboardingDone = ref<boolean>(false)
 
@@ -29,13 +28,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function setPendingPhone(phone: string) {
-    pendingPhone.value = phone
-  }
-
   function logout() {
     employee.value = null
-    pendingPhone.value = ''
     acknowledgedDocs.value = new Set()
     onboardingDone.value = false
   }
@@ -60,14 +54,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     employee,
-    pendingPhone,
     onboardingDone,
     isAuthenticated,
     role,
     isHR,
     completedOnboarding,
     setEmployee,
-    setPendingPhone,
     logout,
     acknowledgeDoc,
     isDocAcknowledged,

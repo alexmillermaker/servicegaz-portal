@@ -13,9 +13,6 @@
             <template v-if="tab.key === 'company'">
               <path d="M3 21h18 M9 8h1 M9 12h1 M9 16h1 M14 8h1 M14 12h1 M14 16h1 M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
             </template>
-            <template v-else-if="tab.key === 'access'">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </template>
             <template v-else-if="tab.key === 'auth'">
               <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
             </template>
@@ -61,7 +58,7 @@
               <label class="form-label">Логотип</label>
               <div class="logo-upload">
                 <img src="/servisgaz-logo.png" class="logo-upload__preview" alt="лого" />
-                <button class="btn btn--outline btn--sm">Заменить</button>
+                <button class="btn btn--outline btn--sm" @click="showSavedMsg('Замена логотипа будет подключена после интеграции файлового хранилища', 'warning')">Заменить</button>
               </div>
             </div>
             <div class="form-actions">
@@ -70,93 +67,25 @@
           </div>
         </div>
 
-        <!-- ── Список доступа ── -->
-        <div v-if="activeTab === 'access'" class="settings-section">
-          <h2 class="settings-section__title">Список доступа</h2>
-          <div class="access-info-banner">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Войти в систему могут только сотрудники из этого списка. Вход — по номеру телефона (логин) и 6-значному паролю, который выдаёт администратор.</span>
-          </div>
-
-          <!-- Добавление -->
-          <div class="access-add">
-            <div style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
-              <div class="input-with-prefix" style="flex:1;min-width:180px">
-                <span class="input-prefix">+7</span>
-                <input v-model="newPhone" class="form-input" style="padding-left:36px" placeholder="9XX XXX XX XX" maxlength="13" @keyup.enter="addAccess" />
-              </div>
-              <input v-model="newName" class="form-input" style="flex:1.5;min-width:200px" placeholder="ФИО сотрудника" @keyup.enter="addAccess" />
-              <select v-model="newRole" class="form-input" style="min-width:130px">
-                <option value="EMPLOYEE">Сотрудник</option>
-                <option value="HR">HR</option>
-              </select>
-            </div>
-            <button class="btn btn--primary" @click="addAccess" :disabled="!newPhone.trim()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Добавить
-            </button>
-          </div>
-
-          <!-- Поиск -->
-          <div class="search-wrap" style="margin-bottom:4px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input v-model="accessSearch" class="search-input" placeholder="Поиск по телефону или имени…" />
-          </div>
-
-          <!-- Список -->
-          <div class="access-list">
-            <div class="access-list__header">
-              <span>Телефон</span><span>ФИО</span><span>Роль</span><span>Доступ</span><span>Принят</span><span></span>
-            </div>
-            <div v-for="emp in filteredAccess" :key="emp.id" class="access-row">
-              <span class="access-phone">{{ emp.phone }}</span>
-              <span class="access-name">{{ emp.name }}</span>
-              <span>
-                <span class="role-badge" :class="emp.role === 'HR' ? 'role-badge--hr' : 'role-badge--employee'">
-                  {{ emp.role === 'HR' ? 'HR' : 'Сотрудник' }}
-                </span>
-              </span>
-              <span>
-                <button
-                  class="toggle-btn toggle-btn--sm"
-                  :class="{ 'toggle-btn--on': emp.status === 'ACTIVE' || emp.status === 'INVITED' }"
-                  @click="toggleAccess(emp.id, emp.status)"
-                  :title="emp.status === 'BLOCKED' ? 'Разрешить доступ' : 'Заблокировать'"
-                >
-                  <span class="toggle-btn__knob"></span>
-                </button>
-              </span>
-              <span class="access-date">{{ emp.hireDate ? new Date(emp.hireDate).toLocaleDateString('ru-RU') : '—' }}</span>
-              <div style="display:flex;gap:4px">
-                <button class="icon-btn" @click="resetOtp(emp.id)" title="Сбросить пароль">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                </button>
-                <button class="icon-btn icon-btn--danger" @click="removeAccess(emp.id)" title="Удалить из системы">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                </button>
-              </div>
-            </div>
-            <div v-if="filteredAccess.length === 0" class="access-empty">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <p>Нет записей, соответствующих фильтру</p>
-            </div>
-          </div>
-          <div class="access-footer">
-            <span class="access-count">
-              {{ accessList.filter(e=>e.status==='ACTIVE'||e.status==='INVITED').length }} активных &nbsp;·&nbsp; {{ accessList.length }} всего
-            </span>
-          </div>
-        </div>
-
         <!-- ── Авторизация ── -->
         <div v-if="activeTab === 'auth'" class="settings-section">
           <h2 class="settings-section__title">Авторизация</h2>
+          <div class="settings-note">
+            <div>
+              <p class="settings-note__title">Доступ сотрудника управляется в карточке сотрудника</p>
+              <p class="settings-note__text">Логин всегда равен номеру телефона. Создание карточки, назначение роли, руководителя, блокировка и восстановление пароля находятся в одном месте — в разделе «Сотрудники».</p>
+            </div>
+            <div class="settings-note__actions">
+              <RouterLink class="btn btn--outline btn--sm" to="/admin/employees">Открыть сотрудников</RouterLink>
+              <RouterLink class="btn btn--outline btn--sm" to="/admin/roles">Роли и доступы</RouterLink>
+            </div>
+          </div>
           <div class="auth-method-block">
             <div class="auth-method-badge">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <div>
-                <div style="font-size:13px;font-weight:700;color:#111827">Телефон + Пароль</div>
-                <div style="font-size:12px;color:#6b7280">Сотрудник входит по номеру телефона и 6-значному паролю, выданному администратором.</div>
+                <div style="font-size:13px;font-weight:700;color:#111827">Постоянный логин + пароль</div>
+                <div style="font-size:12px;color:#6b7280">Пароль генерируется безопасным способом. Восстановить доступ может только администратор.</div>
               </div>
               <span class="auth-method-active">Активен</span>
             </div>
@@ -165,11 +94,8 @@
           <div class="settings-form" style="margin-top:20px">
             <div class="form-row-2">
               <div>
-                <label class="form-label">Длина пароля</label>
-                <select v-model.number="auth.passwordLength" class="form-input">
-                  <option :value="6">6 цифр</option>
-                  <option :value="8">8 символов</option>
-                </select>
+                <label class="form-label">Стандарт пароля</label>
+                <div class="form-input" style="display:flex;align-items:center;background:#f8fafc;color:#374151">Не менее 12 символов разных типов</div>
               </div>
               <div>
                 <label class="form-label">Срок сессии (часы)</label>
@@ -287,76 +213,18 @@
       </div>
     </Teleport>
 
-    <!-- Подтверждение удаления из системы -->
-    <Teleport to="body">
-      <div v-if="removeTarget !== null" class="modal-overlay" @click.self="removeTarget=null">
-        <div class="modal modal--sm">
-          <div class="modal__header">
-            <h2>Удалить из системы?</h2>
-            <button class="modal__close" @click="removeTarget=null">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-          <div class="modal__body">
-            <p style="font-size:14px;color:#374151;line-height:1.6">
-              Сотрудник <b>{{ empStore.employees.find(e=>e.id===removeTarget)?.name }}</b>
-              будет полностью удалён из системы и потеряет доступ немедленно.
-            </p>
-          </div>
-          <div class="modal__footer">
-            <button class="btn btn--outline" @click="removeTarget=null">Отмена</button>
-            <button class="btn btn--danger" @click="doRemoveAccess">Удалить</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- OTP-модал (после добавления / сброса кода) -->
-    <Teleport to="body">
-      <div v-if="newOtpInfo" class="modal-overlay" @click.self="newOtpInfo=null">
-        <div class="modal modal--sm">
-          <div class="modal__header">
-            <h2>Код доступа</h2>
-            <button class="modal__close" @click="newOtpInfo=null">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-          <div class="modal__body">
-            <div class="otp-info-banner">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              <div>
-                <p style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:2px">Сообщите код сотруднику</p>
-                <p style="font-size:12px;color:#0369a1">Вход: {{ newOtpInfo.phone }}</p>
-              </div>
-            </div>
-            <div class="otp-code-block">
-              <span class="otp-code">{{ newOtpInfo.otp }}</span>
-            </div>
-            <div style="font-size:12px;color:#6b7280;text-align:center">{{ newOtpInfo.name }}</div>
-            <p style="font-size:11px;color:#92400e;background:#fffbeb;border-radius:8px;padding:10px;line-height:1.5">
-              Код будет скрыт после закрытия этого окна. Кнопка «↺» в списке доступа создаёт новый.
-            </p>
-          </div>
-          <div class="modal__footer">
-            <button class="btn btn--primary" style="width:100%" @click="newOtpInfo=null">Понятно</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { useEmployeesStore } from '@/store/employees'
+import { ref, reactive } from 'vue'
 import { useToast } from '@/shared/composables/useToast'
 
-const activeTab = ref('access')
+const activeTab = ref('company')
 const toast = useToast()
 
 const tabs = [
   { key: 'company',       label: 'Компания'       },
-  { key: 'access',        label: 'Список доступа' },
   { key: 'auth',          label: 'Авторизация'    },
   { key: 'notifications', label: 'Уведомления'    },
   { key: 'integrations',  label: 'Интеграции'     },
@@ -365,74 +233,11 @@ const tabs = [
 // Компания
 const company = reactive({ name: 'ГК «СЕРВИСГАЗ»', shortName: 'СЕРВИСГАЗ', inn: '7701234567', kpp: '770101001', address: 'г. Москва, ул. Газовиков, 12', website: 'https://servisgas.ru' })
 
-// Список доступа — использует единый store сотрудников
-const empStore = useEmployeesStore()
-
-// Все сотрудники как «whitelist» (не архивированные)
-const accessList = computed(() =>
-  empStore.employees.filter(e => e.status !== 'ARCHIVED')
-)
-
-const newPhone = ref('')
-const newName = ref('')
-const newRole = ref<'EMPLOYEE' | 'HR'>('EMPLOYEE')
-const accessSearch = ref('')
-const removeTarget = ref<string | null>(null)  // employee id
-
-// OTP показываем HR после добавления нового
-const newOtpInfo = ref<{ name: string; phone: string; otp: string } | null>(null)
-
-const filteredAccess = computed(() => {
-  const list = accessList.value
-  if (!accessSearch.value.trim()) return list
-  const q = accessSearch.value.toLowerCase()
-  return list.filter(e => e.phone.includes(q) || e.name.toLowerCase().includes(q))
-})
-
-function addAccess() {
-  const phone = newPhone.value.trim()
-  if (!phone) return
-  if (empStore.findByPhone(phone)) {
-    showSavedMsg('Этот номер уже зарегистрирован в системе', 'warning')
-    return
-  }
-  const { employee, otp } = empStore.addEmployee({
-    name: newName.value.trim() || 'Новый сотрудник',
-    phone, role: newRole.value,
-  })
-  newPhone.value = ''
-  newName.value = ''
-  newRole.value = 'EMPLOYEE'
-  newOtpInfo.value = { name: employee.name, phone: employee.phone, otp }
-}
-
-function toggleAccess(id: string, currentStatus: string) {
-  const active = currentStatus === 'ACTIVE' || currentStatus === 'INVITED'
-  empStore.setAccess(id, !active)
-  showSavedMsg(active ? 'Доступ заблокирован' : 'Доступ разрешён')
-}
-
-function removeAccess(id: string) { removeTarget.value = id }
-function doRemoveAccess() {
-  if (removeTarget.value) {
-    empStore.removeEmployee(removeTarget.value)
-    removeTarget.value = null
-    showSavedMsg('Сотрудник удалён из системы')
-  }
-}
-
-function resetOtp(id: string) {
-  const otp = empStore.resetOtp(id)
-  const emp = empStore.employees.find(e => e.id === id)
-  if (emp) newOtpInfo.value = { name: emp.name, phone: emp.phone, otp }
-}
-
 // Авторизация (пароли)
-const auth = reactive({ passwordLength: 6, sessionHours: 8, maxAttempts: 3, lockMin: 15 })
+const auth = reactive({ sessionHours: 8, maxAttempts: 3, lockMin: 15 })
 const authToggles = reactive([
   { key: 'single_session',  label: 'Одна активная сессия',       desc: 'Новый вход автоматически завершает предыдущую сессию', enabled: true  },
   { key: 'notify_login',    label: 'Уведомлять при входе',       desc: 'Фиксировать каждый успешный вход сотрудника в журнале', enabled: false },
-  { key: 'force_change',    label: 'Смена пароля при первом входе', desc: 'Требовать смену первоначального пароля при первом входе', enabled: false },
 ])
 
 // Уведомления
@@ -491,6 +296,20 @@ function saveSection() { showSavedMsg() }
 .settings-content { background: #fff; border-radius: 12px; border: 1px solid #e5e9ef; }
 .settings-section { padding: 24px; }
 .settings-section__title { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f3f4f6; }
+.settings-note {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  background: #f0f9ff;
+}
+.settings-note__title { font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.settings-note__text { font-size: 12px; color: #0369a1; line-height: 1.5; }
+.settings-note__actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
 
 .settings-form { display: flex; flex-direction: column; gap: 16px; }
 .form-row { display: flex; flex-direction: column; gap: 6px; }
@@ -602,7 +421,7 @@ function saveSection() { showSavedMsg() }
 .modal__body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
 .modal__footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid #f3f4f6; }
 .role-badge--employee { background: #f3f4f6; color: #374151; }
-.otp-info-banner { display: flex; gap: 10px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; color: #0369a1; }
-.otp-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 16px; }
-.otp-code { font-size: 34px; font-weight: 800; letter-spacing: 10px; color: #15803d; font-family: monospace; }
+.credential-info-banner { display: flex; gap: 10px; align-items: flex-start; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; color: #0369a1; }
+.credential-code-block { display: flex; align-items: center; justify-content: center; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 12px; padding: 16px; }
+.credential-code { max-width: 100%; overflow-wrap: anywhere; font-size: 24px; font-weight: 800; letter-spacing: 3px; color: #15803d; font-family: monospace; text-align: center; }
 </style>

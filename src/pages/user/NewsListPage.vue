@@ -348,7 +348,7 @@ function categoryIcon(item: NewsItem): { bg: string; color: string; letter: stri
 
 /* ── Список ── */
 .news-page__list {
-  padding: 0 var(--gap-md);
+  padding: 0 var(--gap-md) var(--gap-md);
   display: flex;
   flex-direction: column;
   gap: var(--gap-md);

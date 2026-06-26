@@ -69,10 +69,15 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useEmployeesStore } from '@/store/employees'
+import { useAdaptationStore } from '@/store/adaptation'
+import { mockDocuments } from '@/api/mockData'
 
 defineProps<{ collapsed: boolean }>()
 
 const auth = useAuthStore()
+const empStore = useEmployeesStore()
+const adaptStore = useAdaptationStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -96,20 +101,24 @@ function isActive(item: { to: string; exact?: boolean }) {
 const icon = (d: string) =>
   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`
 
-const navItems = [
+const employeeBadge = computed(() => empStore.employees.filter(e => e.status !== 'ARCHIVED').length)
+const adaptationBadge = computed(() => adaptStore.plans.filter(p => p.status !== 'completed').length)
+const documentsBadge = computed(() => mockDocuments.filter(d => d.requiresAck).length)
+
+const navItems = computed(() => [
   { to: '/admin', exact: true, label: 'Главная', icon: icon('M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10') },
   {
-    to: '/admin/employees', label: 'Сотрудники', badge: 128,
+    to: '/admin/employees', label: 'Сотрудники', badge: employeeBadge.value,
     icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   },
   { to: '/admin/org', label: 'Организации', icon: icon('M3 21h18 M9 8h1 M9 12h1 M9 16h1 M14 8h1 M14 12h1 M14 16h1 M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16') },
   {
-    to: '/admin/adaptation', label: 'Адаптация', badge: 23,
+    to: '/admin/adaptation', label: 'Адаптация', badge: adaptationBadge.value,
     icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
   },
   { to: '/admin/learning', label: 'Обучение', icon: icon('M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z') },
   {
-    to: '/admin/documents', label: 'Документы', badge: 14,
+    to: '/admin/documents', label: 'Документы', badge: documentsBadge.value,
     icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
   },
   { to: '/admin/news', label: 'Новости', icon: icon('M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z M9 9h6 M9 13h6 M9 17h4') },
@@ -118,7 +127,7 @@ const navItems = [
   { to: '/admin/roles', label: 'Роли и доступы', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>` },
   { to: '/admin/audit', label: 'Журнал действий', icon: icon('M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M8 13h8 M8 17h5 M14 2v6h6') },
   { to: '/admin/settings', label: 'Настройки', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>` },
-]
+])
 </script>
 
 <style scoped>

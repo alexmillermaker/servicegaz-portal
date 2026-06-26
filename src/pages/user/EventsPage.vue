@@ -195,7 +195,7 @@ function formatMonth(dateStr: string) {
 }
 
 /* ── Список ── */
-.events-page__list { padding: 0 var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-sm); }
+.events-page__list { padding: 0 var(--gap-md) var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-sm); }
 
 /* ── Карточка ── */
 .event-card {

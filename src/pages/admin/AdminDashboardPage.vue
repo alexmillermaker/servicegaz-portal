@@ -10,10 +10,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           {{ todayLabel }}
         </div>
-        <button class="dash__customize-btn">
+        <RouterLink to="/admin/settings" class="dash__customize-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Настроить вид
-        </button>
+        </RouterLink>
       </div>
     </div>
 
@@ -43,7 +43,7 @@
                   <td><span class="activity-badge" :class="'activity-badge--' + actionClass(log.action)">{{ log.action }}</span></td>
                   <td class="activity-table__object">{{ log.object }}</td>
                   <td class="activity-table__details">{{ log.details }}</td>
-                  <td><button class="activity-table__chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button></td>
+                  <td><RouterLink to="/admin/audit" class="activity-table__chevron" aria-label="Открыть запись в журнале"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></RouterLink></td>
                 </tr>
               </tbody>
             </table>
@@ -77,10 +77,20 @@
           <div class="donut-wrap">
             <svg viewBox="0 0 160 160" class="donut-svg">
               <circle cx="80" cy="80" r="60" fill="none" stroke="#e5e7eb" stroke-width="22"/>
-              <circle cx="80" cy="80" r="60" fill="none" stroke="#22c55e" stroke-width="22" stroke-dasharray="285.6 91.9" stroke-dashoffset="0" transform="rotate(-90 80 80)"/>
-              <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="22" stroke-dasharray="67.9 309.6" stroke-dashoffset="-285.6" transform="rotate(-90 80 80)"/>
-              <circle cx="80" cy="80" r="60" fill="none" stroke="#ef4444" stroke-width="22" stroke-dasharray="23.4 354.1" stroke-dashoffset="-353.5" transform="rotate(-90 80 80)"/>
-              <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="#111827" font-family="sans-serif">128</text>
+              <circle
+                v-for="segment in donutSegments"
+                :key="segment.label"
+                cx="80"
+                cy="80"
+                r="60"
+                fill="none"
+                :stroke="segment.color"
+                stroke-width="22"
+                :stroke-dasharray="`${segment.length} ${donutCircumference - segment.length}`"
+                :stroke-dashoffset="-segment.offset"
+                transform="rotate(-90 80 80)"
+              />
+              <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="800" fill="#111827" font-family="sans-serif">{{ visibleEmployees.length }}</text>
               <text x="80" y="92" text-anchor="middle" font-size="9" fill="#6b7280" font-family="sans-serif">сотрудников</text>
             </svg>
           </div>
@@ -116,11 +126,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { mockActivityLog, mockDocuments } from '@/api/mockData'
+import { mockActivityLog, mockDocuments, onboardingTasks } from '@/api/mockData'
+import type { Employee } from '@/api/mockData'
+import { useEmployeesStore } from '@/store/employees'
+import { useAdaptationStore } from '@/store/adaptation'
 
 const today = new Date()
 const todayLabel = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+const empStore = useEmployeesStore()
+const adaptStore = useAdaptationStore()
 
 function formatDate(d: string) {
   if (!d || d === '---') return '---'
@@ -138,27 +154,77 @@ function actionClass(action: string) {
 const activityLog = mockActivityLog.slice(0, 5)
 const pendingDocs = mockDocuments.filter(d => d.requiresAck).slice(0, 3)
 
-const statCards = [
-  { label: 'Активные сотрудники', value: 128, trend: '12 за неделю', trendNeutral: false, barPct: 75, barColor: '#0079C2', iconBg: '#dbeafe', iconColor: '#1d4ed8', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  { label: 'Неполная адаптация', value: 23, trend: '5 за неделю', trendNeutral: false, barPct: 18, barColor: '#f59e0b', iconBg: '#fff7ed', iconColor: '#c2410c', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' },
-  { label: 'Просроченная адаптация', value: 8, trend: '2 за неделю', trendNeutral: false, barPct: 6, barColor: '#ef4444', iconBg: '#fee2e2', iconColor: '#dc2626', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
-  { label: 'Документы на ознакомление', value: 14, trend: 'без изменений', trendNeutral: true, barPct: 50, barColor: '#8b5cf6', iconBg: '#f3f0ff', iconColor: '#6d28d9', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
-  { label: 'Действий сегодня', value: 156, trend: '+18% к вчерашнему дню', trendNeutral: false, barPct: 82, barColor: '#22c55e', iconBg: '#dcfce7', iconColor: '#15803d', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
-]
+const visibleEmployees = computed(() => empStore.employees.filter(e => e.status !== 'ARCHIVED'))
+const activeEmployeesCount = computed(() => visibleEmployees.value.filter(e => e.status === 'ACTIVE').length)
+const pendingDocsCount = computed(() => mockDocuments.filter(d => d.requiresAck).length)
+const assignedDocsCount = computed(() => mockDocuments.filter(d => d.requiresAck).reduce((sum, doc) => sum + doc.assignedTo, 0))
 
-const adaptationLegend = [
-  { label: 'Завершена',    color: '#22c55e', count: 97, pct: 75.8 },
-  { label: 'В процессе',  color: '#f59e0b', count: 23, pct: 18.0 },
-  { label: 'Просрочена',  color: '#ef4444', count:  8, pct:  6.2 },
-  { label: 'Не назначена', color: '#d1d5db', count:  0, pct:  0.0 },
-]
+function employeeAdaptPct(emp: Employee) {
+  const plan = adaptStore.findByEmployeeId(emp.id)
+  if (plan) {
+    if (!plan.tasks.length) return plan.progress
+    return Math.round((plan.tasks.filter(task => task.done).length / plan.tasks.length) * 100)
+  }
+  if (!emp.onboardingProgress || onboardingTasks.length === 0) return 0
+  return Math.round((emp.onboardingProgress.length / onboardingTasks.length) * 100)
+}
 
-const dataProblems = [
-  { label: 'Сотрудники без подразделения', count: 5 },
-  { label: 'Сотрудники без должности', count: 3 },
-  { label: 'Дублирующиеся email', count: 2 },
-  { label: 'Просроченные адаптации', count: 8 },
-]
+const adaptationSummary = computed(() => {
+  const total = visibleEmployees.value.length
+  const completed = visibleEmployees.value.filter(emp => employeeAdaptPct(emp) === 100).length
+  const overdue = visibleEmployees.value.filter(emp => adaptStore.findByEmployeeId(emp.id)?.status === 'overdue').length
+  const inProgress = visibleEmployees.value.filter(emp => {
+    const pct = employeeAdaptPct(emp)
+    const plan = adaptStore.findByEmployeeId(emp.id)
+    return pct > 0 && pct < 100 && plan?.status !== 'overdue'
+  }).length
+  const notAssigned = Math.max(0, total - completed - overdue - inProgress)
+  return { total, completed, overdue, inProgress, notAssigned }
+})
+
+const statCards = computed(() => [
+  { label: 'Активные сотрудники', value: activeEmployeesCount.value, trend: `${visibleEmployees.value.length} в реестре`, trendNeutral: true, barPct: pct(activeEmployeesCount.value, visibleEmployees.value.length), barColor: '#0079C2', iconBg: '#dbeafe', iconColor: '#1d4ed8', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+  { label: 'Неполная адаптация', value: adaptationSummary.value.inProgress + adaptationSummary.value.notAssigned, trend: 'требует внимания', trendNeutral: false, barPct: pct(adaptationSummary.value.inProgress + adaptationSummary.value.notAssigned, adaptationSummary.value.total), barColor: '#f59e0b', iconBg: '#fff7ed', iconColor: '#c2410c', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' },
+  { label: 'Просроченная адаптация', value: adaptationSummary.value.overdue, trend: adaptationSummary.value.overdue ? 'есть просрочки' : 'без просрочек', trendNeutral: adaptationSummary.value.overdue === 0, barPct: pct(adaptationSummary.value.overdue, adaptationSummary.value.total), barColor: '#ef4444', iconBg: '#fee2e2', iconColor: '#dc2626', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+  { label: 'Документы на ознакомление', value: pendingDocsCount.value, trend: `${assignedDocsCount.value} назначений`, trendNeutral: true, barPct: Math.min(100, pendingDocsCount.value * 20), barColor: '#8b5cf6', iconBg: '#f3f0ff', iconColor: '#6d28d9', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
+  { label: 'Действий в журнале', value: mockActivityLog.length, trend: 'последние операции', trendNeutral: true, barPct: Math.min(100, mockActivityLog.length * 12), barColor: '#22c55e', iconBg: '#dcfce7', iconColor: '#15803d', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
+])
+
+function pct(value: number, total: number) {
+  return total ? Math.round((value / total) * 100) : 0
+}
+
+const adaptationLegend = computed(() => [
+  { label: 'Завершена', color: '#22c55e', count: adaptationSummary.value.completed, pct: pct(adaptationSummary.value.completed, adaptationSummary.value.total) },
+  { label: 'В процессе', color: '#f59e0b', count: adaptationSummary.value.inProgress, pct: pct(adaptationSummary.value.inProgress, adaptationSummary.value.total) },
+  { label: 'Просрочена', color: '#ef4444', count: adaptationSummary.value.overdue, pct: pct(adaptationSummary.value.overdue, adaptationSummary.value.total) },
+  { label: 'Не назначена', color: '#d1d5db', count: adaptationSummary.value.notAssigned, pct: pct(adaptationSummary.value.notAssigned, adaptationSummary.value.total) },
+])
+
+const donutCircumference = 2 * Math.PI * 60
+const donutSegments = computed(() => {
+  let offset = 0
+  return adaptationLegend.value
+    .filter(item => item.count > 0 && adaptationSummary.value.total > 0)
+    .map(item => {
+      const length = (item.count / adaptationSummary.value.total) * donutCircumference
+      const segment = { ...item, length, offset }
+      offset += length
+      return segment
+    })
+})
+
+const dataProblems = computed(() => [
+  { label: 'Сотрудники без подразделения', count: visibleEmployees.value.filter(e => !e.department).length },
+  { label: 'Сотрудники без должности', count: visibleEmployees.value.filter(e => !e.position).length },
+  { label: 'Дублирующиеся email', count: duplicateEmails.value },
+  { label: 'Просроченные адаптации', count: adaptationSummary.value.overdue },
+])
+
+const duplicateEmails = computed(() => {
+  const emails = visibleEmployees.value.map(e => e.email?.trim().toLowerCase()).filter(Boolean)
+  return emails.filter((email, idx) => emails.indexOf(email) !== idx).length
+})
 </script>
 
 <style scoped>
@@ -168,7 +234,7 @@ const dataProblems = [
 .dash__sub    { font-size: 13px; color: #6b7280; margin-top: 2px; }
 .dash__header-right { display: flex; align-items: center; gap: 10px; }
 .dash__date-range { display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: #fff; border: 1px solid #e5e9ef; border-radius: 8px; font-size: 13px; font-weight: 500; color: #374151; }
-.dash__customize-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #fff; border: 1px solid #e5e9ef; border-radius: 8px; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; font-family: var(--font-body); transition: background 0.15s; }
+.dash__customize-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: #fff; border: 1px solid #e5e9ef; border-radius: 8px; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; font-family: var(--font-body); transition: background 0.15s; text-decoration: none; }
 .dash__customize-btn:hover { background: #f9fafb; }
 .dash__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
 .stat-card { background: #fff; border: 1px solid #e5e9ef; border-radius: 12px; padding: 18px 16px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -202,7 +268,7 @@ const dataProblems = [
 .activity-badge--orange { background: #fff7ed; color: #c2410c; }
 .activity-badge--gray   { background: #f3f4f6; color: #6b7280; }
 .activity-badge--red    { background: #fee2e2; color: #dc2626; }
-.activity-table__chevron { background: none; border: none; color: #d1d5db; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.15s; }
+.activity-table__chevron { background: none; border: none; color: #d1d5db; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.15s; text-decoration: none; }
 .activity-table__chevron:hover { color: #0079C2; }
 .docs-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
 .docs-table th { padding: 10px 14px 8px; text-align: left; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; background: #f9fafb; white-space: nowrap; }

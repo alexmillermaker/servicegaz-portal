@@ -1,15 +1,12 @@
 // Единый источник данных о сотрудниках.
-// Мутирует исходный массив mockEmployees — поэтому mockClient.ts (checkPhone/verifyOtp)
+// Мутирует исходный массив mockEmployees — поэтому mockClient.ts
 // автоматически видит изменения без перезагрузки страницы.
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { mockEmployees } from '@/api/mockData'
 import type { Employee, UserRole } from '@/api/mockData'
 import { normalizePhone } from '@/shared/utils/normalizePhone'
-
-function generateOtp(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
-}
+import { generateSecurePassword } from '@/shared/utils/employeeCredentials'
 
 export const useEmployeesStore = defineStore('employees', () => {
   // Реактивная обёртка над тем же массивом что читает mockClient.ts
@@ -23,7 +20,7 @@ export const useEmployeesStore = defineStore('employees', () => {
     return employees.value.find(e => normalizePhone(e.phone) === norm)
   }
 
-  // Добавить нового сотрудника. Возвращает объект с OTP чтобы показать HR.
+  // Карточку и постоянные данные для входа создаёт администратор.
   function addEmployee(data: {
     name: string
     phone: string
@@ -31,13 +28,15 @@ export const useEmployeesStore = defineStore('employees', () => {
     position?: string
     department?: string
     role?: UserRole
-    otp?: string        // если передан — используем его, иначе генерируем
-  }): { employee: Employee; otp: string } {
-    const otp = data.otp ?? generateOtp()
+    password?: string
+    managerId?: string
+  }): { employee: Employee; password: string } {
+    const password = data.password ?? generateSecurePassword()
     const emp: Employee = {
       id: 'emp-' + Date.now(),
+      managerId: data.managerId || undefined,
       phone: normalizePhone(data.phone),
-      otp,
+      password,
       name: data.name,
       position: data.position ?? '',
       role: data.role ?? 'EMPLOYEE',
@@ -50,7 +49,7 @@ export const useEmployeesStore = defineStore('employees', () => {
     }
     mockEmployees.unshift(emp)          // мутируем исходный массив → mockClient видит его
     employees.value = [...mockEmployees] // форсируем реактивность
-    return { employee: emp, otp }
+    return { employee: emp, password }
   }
 
   function updateEmployee(id: string, updates: Partial<Employee>) {
@@ -74,11 +73,11 @@ export const useEmployeesStore = defineStore('employees', () => {
     updateEmployee(id, { status: active ? 'ACTIVE' : 'BLOCKED' })
   }
 
-  // Сбросить OTP (HR может запросить новый)
-  function resetOtp(id: string): string {
-    const otp = generateOtp()
-    updateEmployee(id, { otp })
-    return otp
+  // Восстановление выполняет администратор: старый пароль сразу перестаёт действовать.
+  function resetPassword(id: string): string {
+    const password = generateSecurePassword()
+    updateEmployee(id, { password })
+    return password
   }
 
   return {
@@ -90,7 +89,7 @@ export const useEmployeesStore = defineStore('employees', () => {
     updateEmployee,
     removeEmployee,
     setAccess,
-    resetOtp,
-    generateOtp,
+    resetPassword,
+    generateSecurePassword,
   }
 })

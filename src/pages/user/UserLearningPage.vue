@@ -265,7 +265,7 @@ const avgProgress = computed(() => {
 .lf-btn.is-active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
 
 /* ── Список ── */
-.learning-page__list { padding: 0 var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-sm); }
+.learning-page__list { padding: 0 var(--gap-md) var(--gap-md); display: flex; flex-direction: column; gap: var(--gap-sm); }
 
 /* ── Карточка курса ── */
 .course-card {

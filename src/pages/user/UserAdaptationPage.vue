@@ -1,20 +1,69 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import MobileNavigation from '@/widgets/MobileNavigation.vue'
 import AppPageHeader from '@/shared/ui/AppPageHeader.vue'
 import { useAuthStore } from '@/store/auth'
 import { useAdaptationStore } from '@/store/adaptation'
+import type { AdaptTask } from '@/store/adaptation'
+import { onboardingTasks } from '@/api/mockData'
+import { saveOnboardingProgress } from '@/api/mockClient'
+import { useToast } from '@/shared/composables/useToast'
+import { useHaptic } from '@/shared/composables/useHaptic'
 
 const auth = useAuthStore()
 const router = useRouter()
 const adaptStore = useAdaptationStore()
+const toast = useToast()
+const haptic = useHaptic()
+const completing = ref(false)
 
 const plan = computed(() => auth.employee?.id ? adaptStore.findByEmployeeId(auth.employee.id) : undefined)
 
-const tasks = computed(() => plan.value?.tasks ?? [])
+const tasks = computed<AdaptTask[]>(() => plan.value?.tasks ?? onboardingTasks.map(task => ({
+  label: task.text,
+  done: auth.completedOnboarding.includes(task.id),
+})))
 const doneCount = computed(() => tasks.value.filter(t => t.done).length)
 const progress = computed(() => tasks.value.length ? Math.round(doneCount.value / tasks.value.length * 100) : 0)
+const allDone = computed(() => tasks.value.length > 0 && doneCount.value === tasks.value.length)
+const isCompleted = computed(() => plan.value?.status === 'completed' || (!plan.value && auth.onboardingDone))
+
+function persistProgress(nextDoneIndexes: number[]) {
+  if (!auth.employee) return
+  auth.setOnboardingProgress(nextDoneIndexes)
+  void saveOnboardingProgress(auth.employee.id, nextDoneIndexes)
+}
+
+function toggleTask(index: number) {
+  if (isCompleted.value || !auth.employee) return
+  haptic.tap()
+
+  if (plan.value) {
+    const nextTasks = plan.value.tasks.map((task, taskIndex) => taskIndex === index ? { ...task, done: !task.done } : { ...task })
+    const nextDoneIndexes = nextTasks.flatMap((task, taskIndex) => task.done ? [taskIndex] : [])
+    const nextProgress = nextTasks.length ? Math.round((nextDoneIndexes.length / nextTasks.length) * 100) : 0
+    adaptStore.update(plan.value.id, { tasks: nextTasks, progress: nextProgress })
+    persistProgress(nextDoneIndexes)
+    return
+  }
+
+  const nextDoneIndexes = tasks.value.flatMap((task, taskIndex) => (taskIndex === index ? !task.done : task.done) ? [taskIndex] : [])
+  persistProgress(nextDoneIndexes)
+}
+
+async function finishOnboarding() {
+  if (!allDone.value || isCompleted.value || completing.value || !auth.employee) return
+  completing.value = true
+  haptic.heavy()
+  const doneIndexes = tasks.value.map((_, index) => index)
+  await saveOnboardingProgress(auth.employee.id, doneIndexes)
+  auth.setOnboardingProgress(doneIndexes)
+  auth.completeOnboarding()
+  if (plan.value) adaptStore.update(plan.value.id, { progress: 100, status: 'completed' })
+  completing.value = false
+  toast.success('Адаптация успешно завершена!')
+}
 
 const planInfo = computed(() => {
   if (plan.value) {
@@ -100,11 +149,15 @@ const statusClass = computed(() => {
     <!-- Задачи -->
     <div class="adapt-page__tasks">
       <h2 class="adapt-page__tasks-title">Задачи</h2>
-      <div
+      <p v-if="!isCompleted" class="adapt-page__tasks-hint">Отмечайте задачи самостоятельно по мере выполнения.</p>
+      <button
         v-for="(task, ti) in tasks"
         :key="ti"
+        type="button"
         class="task-item"
         :class="{ 'task-item--done': task.done }"
+        :disabled="isCompleted"
+        @click="toggleTask(ti)"
       >
         <div class="task-item__check">
           <svg v-if="task.done" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-success)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -115,7 +168,17 @@ const statusClass = computed(() => {
           <span v-if="task.detail" class="task-item__detail">{{ task.detail }}</span>
         </div>
         <div v-if="task.done" class="task-item__done-badge">Готово</div>
-      </div>
+      </button>
+
+      <button
+        v-if="!isCompleted"
+        type="button"
+        class="adapt-page__finish-btn"
+        :disabled="!allDone || completing"
+        @click="finishOnboarding"
+      >
+        {{ completing ? 'Завершаем…' : 'Завершить адаптацию' }}
+      </button>
     </div>
 
     <div class="nav-spacer" />
@@ -178,10 +241,15 @@ const statusClass = computed(() => {
 .progress-bar__fill { height: 100%; border-radius: var(--r-full); transition: width 0.4s var(--ease-out); }
 
 /* ── Задачи ── */
-.adapt-page__tasks { padding: 0 var(--gap-md); }
+.adapt-page__tasks { padding: 0 var(--gap-md) var(--gap-md); }
 .adapt-page__tasks-title { font-size: var(--fs-md); font-weight: 700; margin-bottom: var(--gap-sm); }
+.adapt-page__tasks-hint { font-size: var(--fs-xs); color: var(--c-text-3); margin: calc(var(--gap-xs) * -1) 0 var(--gap-sm); }
 
 .task-item {
+  width: 100%;
+  text-align: left;
+  color: var(--c-text);
+  font-family: var(--font-body);
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
@@ -192,7 +260,10 @@ const statusClass = computed(() => {
   margin-bottom: var(--gap-sm);
   box-shadow: var(--shadow-sm);
   transition: opacity var(--dur-fast);
+  cursor: pointer;
 }
+.task-item:active:not(:disabled) { opacity: 0.72; }
+.task-item:disabled { cursor: default; }
 .task-item--done { background: #f0fdf4; border-color: #bbf7d0; }
 
 .task-item__check {
@@ -220,4 +291,17 @@ const statusClass = computed(() => {
   flex-shrink: 0;
   align-self: center;
 }
+
+.adapt-page__finish-btn {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--gap-xs);
+  border: none;
+  border-radius: var(--r-lg);
+  background: var(--c-accent);
+  color: #fff;
+  font: 700 var(--fs-base) var(--font-body);
+  cursor: pointer;
+}
+.adapt-page__finish-btn:disabled { background: var(--c-bg-2); color: var(--c-text-3); cursor: not-allowed; }
 </style>

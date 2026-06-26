@@ -4,49 +4,49 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useEmployeesStore } from '@/store/employees'
 import { onboardingTasks } from '@/api/mockData'
-import { saveOnboardingProgress } from '@/api/mockClient'
+import { useAdaptationStore } from '@/store/adaptation'
+import { useLearningStore } from '@/store/learning'
 import MobileNavigation from '@/widgets/MobileNavigation.vue'
 import AppPageHeader from '@/shared/ui/AppPageHeader.vue'
 import AppNotificationsDrawer from '@/shared/ui/AppNotificationsDrawer.vue'
-import { useToast } from '@/shared/composables/useToast'
 import { useHaptic } from '@/shared/composables/useHaptic'
 import { useNotifications } from '@/shared/composables/useNotifications'
+import { formatPhone } from '@/shared/utils/normalizePhone'
 
 const router = useRouter()
 const auth = useAuthStore()
 const empStore = useEmployeesStore()
-const toast = useToast()
+const adaptStore = useAdaptationStore()
+const learningStore = useLearningStore()
 const haptic = useHaptic()
 const { unreadCount } = useNotifications()
 const showNotifications = ref(false)
 
-const completed = ref<Set<number>>(new Set(auth.completedOnboarding))
-const completing = ref(false)
-
-const progress = computed(() =>
-  auth.onboardingDone ? 100 : Math.round((completed.value.size / onboardingTasks.length) * 100)
+const adaptationPlan = computed(() => auth.employee?.id ? adaptStore.findByEmployeeId(auth.employee.id) : undefined)
+const isAdaptationCompleted = computed(() => adaptationPlan.value
+  ? adaptationPlan.value.status === 'completed'
+  : auth.onboardingDone
 )
-const allDone = computed(() => completed.value.size === onboardingTasks.length)
-
-function toggleTask(id: number) {
-  if (auth.onboardingDone) return
-  const next = new Set(completed.value)
-  next.has(id) ? next.delete(id) : next.add(id)
-  completed.value = next
-  haptic.tap()
-  auth.setOnboardingProgress([...next])
-  saveOnboardingProgress(auth.employee!.id, [...next])
-}
-
-async function finishOnboarding() {
-  if (!allDone.value || completing.value) return
-  completing.value = true
-  haptic.heavy()
-  await saveOnboardingProgress(auth.employee!.id, [...completed.value])
-  auth.completeOnboarding()
-  completing.value = false
-  toast.success('Адаптация успешно завершена!')
-}
+const adaptationTotal = computed(() => adaptationPlan.value?.tasks.length ?? onboardingTasks.length)
+const adaptationDone = computed(() => {
+  if (adaptationPlan.value) return adaptationPlan.value.tasks.filter(task => task.done).length
+  return auth.completedOnboarding.length
+})
+const progress = computed(() => adaptationTotal.value
+  ? Math.round((adaptationDone.value / adaptationTotal.value) * 100)
+  : 0
+)
+const assignedCoursesCount = computed(() => auth.employee?.id
+  ? learningStore.getEnrollmentsForEmployee(auth.employee.id).length
+  : 0
+)
+const assignedCoursesLabel = computed(() => {
+  const count = assignedCoursesCount.value
+  const mod10 = count % 10
+  const mod100 = count % 100
+  const noun = mod10 === 1 && mod100 !== 11 ? 'курс' : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'курса' : 'курсов'
+  return `${count} ${noun} назначено`
+})
 
 const hireDate = computed(() => {
   if (!auth.employee?.hireDate) return '—'
@@ -65,10 +65,6 @@ const avatarBg = computed(() => {
   return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
 })
 
-function statusLabel(status?: string): string {
-  return ({ ACTIVE: 'Активен', INVITED: 'Приглашён', BLOCKED: 'Заблокирован', ARCHIVED: 'Архивный' } as Record<string,string>)[status ?? ''] ?? 'Активен'
-}
-
 const showLogoutConfirm = ref(false)
 
 function confirmLogout() { showLogoutConfirm.value = true }
@@ -78,7 +74,8 @@ interface QuickContact { initials: string; label: string; role: string; color: s
 
 const quickContacts = computed<QuickContact[]>(() => {
   const emps = empStore.employees
-  const ruk = emps.find(e => e.role === 'HR' && e.position.toLowerCase().includes('директор'))
+  const assignedManager = emps.find(e => e.id === auth.employee?.managerId)
+  const ruk = assignedManager ?? emps.find(e => e.role === 'HR' && e.position.toLowerCase().includes('директор'))
   const it  = emps.find(e => e.department === 'ИТ и цифровые решения' && e.id !== auth.employee?.id)
   const ot  = emps.find(e => e.department === 'Служба безопасности')
   const hr  = emps.find(e => e.department === 'HR департамент')
@@ -101,31 +98,25 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
     <div class="profile__body">
       <!-- Карточка пользователя -->
       <div class="profile__user-card">
-        <div class="profile__avatar" :style="{ background: avatarBg }">
-          <span class="profile__avatar-initials">{{ initials }}</span>
-        </div>
-        <div class="profile__user-info">
-          <h1 class="profile__name">
-            {{ auth.employee?.name }}
-            <span v-if="auth.onboardingDone" class="profile__verified" title="Адаптация пройдена">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="12" fill="#0079C2"/>
-                <polyline points="7 12 10.5 15.5 17 9" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </h1>
-          <span class="profile__status-badge" :class="`profile__status-badge--${(auth.employee?.status ?? 'ACTIVE').toLowerCase()}`">
-            <span class="profile__status-dot" />
-            {{ statusLabel(auth.employee?.status) }}
-          </span>
+        <div class="profile__identity">
+          <div class="profile__avatar" :style="{ background: avatarBg }">
+            <span class="profile__avatar-initials">{{ initials }}</span>
+          </div>
+          <div class="profile__user-info">
+            <h1 class="profile__name">
+              {{ auth.employee?.name }}
+              <span v-if="isAdaptationCompleted" class="profile__verified" title="Адаптация пройдена" aria-label="Адаптация пройдена">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="12" fill="#0079C2"/>
+                  <polyline points="7 12 10.5 15.5 17 9" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </h1>
+            <span class="profile__position">{{ auth.employee?.position || 'Должность не указана' }}</span>
+          </div>
         </div>
 
         <div class="profile__user-rows">
-          <div class="profile__row">
-            <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            <span class="profile__row-label">Должность</span>
-            <span class="profile__row-val">{{ auth.employee?.position || '—' }}</span>
-          </div>
           <div class="profile__row">
             <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <span class="profile__row-label">Подразделение</span>
@@ -134,7 +125,12 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
           <div class="profile__row">
             <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.82 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.07 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.91 9.56a16 16 0 0 0 5.53 5.53l.62-.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             <span class="profile__row-label">Телефон (логин)</span>
-            <span class="profile__row-val">{{ auth.employee?.phone || '—' }}</span>
+            <span class="profile__row-val">{{ auth.employee?.phone ? formatPhone(auth.employee.phone) : '—' }}</span>
+          </div>
+          <div class="profile__row">
+            <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span class="profile__row-label">Почта</span>
+            <span class="profile__row-val">{{ auth.employee?.email || '—' }}</span>
           </div>
           <div class="profile__row">
             <svg class="profile__row-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -144,60 +140,8 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
         </div>
       </div>
 
-      <!-- Адаптация -->
-      <div v-if="!auth.onboardingDone" class="profile__adapt-card">
-        <div class="profile__adapt-head">
-          <div class="profile__adapt-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0079C2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <div class="profile__adapt-title-wrap">
-            <div class="profile__adapt-title-row">
-              <h2 class="profile__adapt-title">Адаптация</h2>
-              <span class="profile__adapt-p0">P0</span>
-            </div>
-            <div class="profile__adapt-subtitle-row">
-              <span class="profile__adapt-sub">Ваш прогресс адаптации</span>
-              <span class="profile__adapt-pct">{{ progress }}%</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="profile__progress-track">
-          <div class="profile__progress-fill" :style="{ width: progress + '%' }" />
-        </div>
-
-        <ul class="profile__checklist">
-          <li
-            v-for="task in onboardingTasks"
-            :key="task.id"
-            class="profile__check-item"
-            @click="toggleTask(task.id)"
-          >
-            <span class="profile__check-box" :class="{ 'is-done': completed.has(task.id) }">
-              <svg v-if="completed.has(task.id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </span>
-            <span class="profile__check-text">{{ task.text }}</span>
-            <span class="profile__check-badge" :class="completed.has(task.id) ? 'badge--done' : 'badge--pending'">
-              {{ completed.has(task.id) ? 'Выполнено' : 'Не начато' }}
-            </span>
-          </li>
-        </ul>
-
-        <button
-          class="profile__finish-btn"
-          :disabled="!allDone || completing"
-          @click="finishOnboarding"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Завершить адаптацию
-        </button>
-      </div>
-
-
       <!-- Мои разделы -->
+      <h2 class="profile__section-title">Мои разделы</h2>
       <div class="profile__modules">
         <RouterLink to="/adaptation" class="profile__module-row">
           <div class="profile__module-icon" style="background:#e0f2fe;color:#0369a1">
@@ -205,7 +149,7 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
           </div>
           <div class="profile__module-info">
             <span class="profile__module-name">Адаптация</span>
-            <span class="profile__module-meta">{{ progress }}% выполнено · {{ completed.size }}/{{ onboardingTasks.length }} задач</span>
+            <span class="profile__module-meta">{{ progress }}% выполнено · {{ adaptationDone }}/{{ adaptationTotal }} задач</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </RouterLink>
@@ -215,7 +159,7 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
           </div>
           <div class="profile__module-info">
             <span class="profile__module-name">Обучение</span>
-            <span class="profile__module-meta">4 курса назначено</span>
+            <span class="profile__module-meta">{{ assignedCoursesLabel }}</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </RouterLink>
@@ -328,8 +272,14 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
   box-shadow: var(--shadow-sm);
 }
 
+.profile__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+}
+
 .profile__avatar {
-  width: 72px; height: 72px;
+  width: 56px; height: 56px;
   border-radius: 50%;
   background: var(--c-accent);
   border: 2px solid rgba(255,255,255,0.3);
@@ -339,7 +289,7 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
   flex-shrink: 0;
 }
 .profile__avatar-initials {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.5px;
@@ -352,17 +302,14 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
   gap: var(--gap-xs);
 }
 .profile__name {
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.profile__verified {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
+.profile__position { font-size: var(--fs-sm); color: var(--c-text-2); }
+.profile__verified { display: inline-flex; align-items: center; flex-shrink: 0; }
 .profile__status-badge {
   display: inline-flex;
   align-items: center;
@@ -399,6 +346,7 @@ function openContact(c: QuickContact) { haptic.tap(); activeContact.value = c }
 .profile__row-icon { color: var(--c-text-3); flex-shrink: 0; }
 .profile__row-label { color: var(--c-text-2); flex: 1; }
 .profile__row-val { font-weight: 500; color: var(--c-text); text-align: right; max-width: 55%; }
+.profile__section-title { font-size: var(--fs-md); font-weight: 700; margin: 2px 2px -4px; }
 
 /* ── Adapt card ── */
 .profile__adapt-card {
