@@ -33,32 +33,83 @@ Rules:
 
 ## Current confirmed route facts
 
-Building 1, floor 1:
+Technical building IDs in the current code are stable implementation IDs, not user-facing names:
+
+- `b1` is the administrative two-floor building, user-facing name `АБК`, site-plan object `009`.
+- `b2` is the temporary placeholder for `Производственный корпус 1`, site-plan object `008`.
+- Do not rename technical IDs such as `b1`, `b2`, `B2-E01`, or `B2-P01` until a separate route-graph migration is explicitly requested.
+
+АБК, floor 1:
 
 - `F1-S01` maps to `F2-S01`.
 - `F1-S02` maps to `F2-S02`.
-- `F1-B01` is the confirmed first-floor transition from Building 1 to Building 2.
-- Male/female changing rooms, toilets, and showers on Building 1 floor 1 are accessed through the Building 2 side and must show the access note `Вход через Корпус 2`.
+- `F1-B01` is the confirmed first-floor transition from АБК to Производственный корпус 1.
+- Male/female changing rooms, toilets, and showers on АБК floor 1 are accessed through the Производственный корпус 1 side and must show the access note `Вход через производственный корпус 1`.
 
-Building 1, floor 2:
+АБК, floor 2:
 
 - Second-floor room IDs `F2-R01` through `F2-R11` are confirmed by the user.
 - `F2-D01A` is used; the unused `F2-D01B` opening is excluded.
 - Corridor and door nodes must keep all confirmed second-floor destinations reachable.
 
-Building 2:
+Производственный корпус 1:
 
-- Current Building 2 geometry is temporary and explicitly authorized as a placeholder.
+- Current Производственный корпус 1 geometry is temporary and explicitly authorized as a placeholder.
 - `B2-E01` links to `F1-B01`.
 - `B2-P01` is a temporary test destination.
-- Replace only the placeholder map, coordinates, nodes, and edges after the real Building 2 plan is supplied.
+- Replace only the placeholder map, coordinates, nodes, and edges after the real Производственный корпус 1 plan is supplied.
 - Do not treat the placeholder geometry as fact.
 
-Buildings 3-7:
+Future production objects:
 
-- They are expected future buildings.
+- Production corpus objects `Корпус 2`, `Корпус 3`, `Корпус 4`, `Корпус 5`, `Корпус 7`, `Корпус 8`, and `Спортзал` are expected future objects.
 - Keep object/building switching capable of showing them.
 - Do not invent plans, rooms, or transitions for them before the user provides data.
+
+General site plan:
+
+- The user supplied `Общий план.svg` as the production site plan.
+- The confirmed object index is documented in `docs/navigation/site-plan-object-index.md`.
+- The marked reference SVG is `docs/navigation/site-plan-ids.svg`.
+- The working navigation overview map is `public/maps/site_plan.svg`.
+- User-facing overview labels must show object names only, without technical site-plan IDs or label frames.
+- Confirmed site-plan object mapping:
+  - `001` — 4 корпус
+  - `002` — Спортзал
+  - `003` — 3 корпус
+  - `004` — 8 корпус
+  - `005` — 2 корпус
+  - `006` — 5 корпус
+  - `007` — 7 корпус
+  - `008` — 1 корпус
+  - `009` — АБК
+- These site-plan IDs are for production objects, not rooms inside buildings.
+- Current code mapping:
+  - `b1` corresponds to `009` АБК.
+  - `b2` corresponds to `008` Производственный корпус 1.
+  - `b_site_2` corresponds to `005` Корпус 2.
+  - `b3` corresponds to `003` Корпус 3.
+  - `b4` corresponds to `001` Корпус 4.
+  - `b5` corresponds to `006` Корпус 5.
+  - `b7` corresponds to `007` Корпус 7.
+- `b8` corresponds to `004` Корпус 8.
+- `gym` corresponds to `002` Спортзал.
+
+## Smart zoom
+
+The general production overview supports smart zoom into detailed object maps.
+
+Rules:
+
+- Smart zoom uses the actual zoom focus point, not only the screen center.
+- On the general production overview, when the user zooms into a mapped object, show a soft prompt before switching maps.
+- A second zoom action or tapping the prompt opens the selected object.
+- If the selected object has a confirmed detailed map, open that map.
+- If the selected object has no confirmed detailed map yet, open the object state with the standard “map not loaded yet” message.
+- On a detailed object map, zooming out to the base scale shows a soft prompt to return to the general production overview.
+- A second zoom-out action or tapping the prompt returns to the general production overview.
+- Confirmed detailed smart-zoom map targets at the moment are АБК and Производственный корпус 1.
+- Do not invent detailed maps, rooms, route nodes, or transitions for future objects before their real plans are confirmed.
 
 ## Inter-building transitions and notes
 
@@ -70,11 +121,11 @@ Rules:
 - The map must show a transition marker at the local endpoint of that edge.
 - Route instructions must mention moving to the next building.
 - If a destination or start requires access through a neighboring building, the list and route card must show an access note.
-- Do not remove the Building 2 access note for the changing-room/toilet/shower block unless the user explicitly changes that route fact.
+- Do not remove the Производственный корпус 1 access note for the changing-room/toilet/shower block unless the user explicitly changes that route fact.
 
 Current required note:
 
-- `Вход через Корпус 2` for:
+- `Вход через производственный корпус 1` for:
   - `locker_m`
   - `locker_f`
   - `wc_m`

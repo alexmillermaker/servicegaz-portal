@@ -59,12 +59,18 @@ Confirmed rules:
 - Room numbers are not shown directly on the map, but may remain in list/search metadata.
 - Inter-floor routes must use confirmed stairs.
 - Inter-building routes must use confirmed building transitions and show an explicit transition/access note.
-- Building 2 currently uses a clearly marked temporary placeholder until the real plan is supplied.
+- The general production overview uses the marked site plan from `public/maps/site_plan.svg`.
+- The general production overview must show user-facing object names only; technical site-plan IDs stay out of the UI.
+- General overview smart zoom may offer a soft prompt into any selected site object and a soft prompt back to the general overview on zoom-out.
+- Objects without confirmed detailed maps must keep the standard “map not loaded yet” state.
+- Производственный корпус 1 currently uses a clearly marked temporary placeholder until the real plan is supplied.
 
 Do not:
 
 - Invent new rooms, labels, or transitions.
-- Treat temporary Building 2 geometry as factual.
+- Replace the confirmed site plan with a temporary drawn overview.
+- Invent detailed maps for future objects through smart zoom.
+- Treat temporary Производственный корпус 1 geometry as factual.
 - Remove transition notices for neighboring buildings.
 
 Detailed navigation rules live in `docs/NAVIGATION_SPEC.md`.

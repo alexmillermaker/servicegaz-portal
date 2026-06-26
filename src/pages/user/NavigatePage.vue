@@ -20,16 +20,43 @@ interface BuildingOption {
   overview?: boolean
 }
 
+interface SitePlanObject {
+  id: string
+  buildingId: string
+  label: string
+  points: [number, number][]
+}
+
 const buildings: BuildingOption[] = [
   { id: 'site', label: 'Общая карта', sub: 'Вся территория', short: 'Объект', overview: true },
-  { id: 'b1', label: 'Корпус 1', sub: 'Главный корпус', short: 'К1' },
-  { id: 'b2', label: 'Корпус 2', sub: 'Производственный', short: 'К2' },
-  { id: 'b3', label: 'Корпус 3', sub: 'Здание 3', short: 'К3' },
-  { id: 'b4', label: 'Корпус 4', sub: 'Здание 4', short: 'К4' },
-  { id: 'b5', label: 'Корпус 5', sub: 'Здание 5', short: 'К5' },
-  { id: 'b6', label: 'Корпус 6', sub: 'Здание 6', short: 'К6' },
-  { id: 'b7', label: 'Корпус 7', sub: 'Здание 7', short: 'К7' },
+  { id: 'b1', label: 'АБК', sub: 'Административное двухэтажное здание', short: 'АБК' },
+  { id: 'b2', label: 'Производственный корпус 1', sub: 'Производственный корпус', short: 'ПК1' },
+  { id: 'b_site_2', label: 'Корпус 2', sub: 'Производственный корпус', short: 'К2' },
+  { id: 'b3', label: 'Корпус 3', sub: 'Производственный корпус', short: 'К3' },
+  { id: 'b4', label: 'Корпус 4', sub: 'Производственный корпус', short: 'К4' },
+  { id: 'b5', label: 'Корпус 5', sub: 'Производственный корпус', short: 'К5' },
+  { id: 'b7', label: 'Корпус 7', sub: 'Производственный корпус', short: 'К7' },
+  { id: 'b8', label: 'Корпус 8', sub: 'Производственный корпус', short: 'К8' },
+  { id: 'gym', label: 'Спортзал', sub: 'Отдельный объект', short: 'Спорт' },
 ]
+
+const SITE_PLAN_OBJECTS: SitePlanObject[] = [
+  { id: '001', buildingId: 'b4', label: 'Корпус 4', points: [[56, 221], [536, 223], [536, 260], [56, 258]] },
+  { id: '002', buildingId: 'gym', label: 'Спортзал', points: [[668, 292], [717, 292], [717, 353], [668, 353]] },
+  { id: '003', buildingId: 'b3', label: 'Корпус 3', points: [[232, 435], [449, 436], [448, 547], [387, 546], [387, 514], [232, 514]] },
+  { id: '004', buildingId: 'b8', label: 'Корпус 8', points: [[453, 436], [510, 436], [511, 412], [660, 412], [659, 660], [448, 659]] },
+  { id: '005', buildingId: 'b_site_2', label: 'Корпус 2', points: [[204, 578], [204, 617], [270, 617], [270, 660], [448, 660], [448, 547], [387, 546], [387, 575]] },
+  { id: '006', buildingId: 'b5', label: 'Корпус 5', points: [[509, 739], [508, 909], [542, 910], [542, 781], [657, 782], [657, 740]] },
+  { id: '007', buildingId: 'b7', label: 'Корпус 7', points: [[708, 744], [749, 744], [748, 984], [707, 984]] },
+  { id: '008', buildingId: 'b2', label: 'Производственный корпус 1', points: [[245, 773], [245, 794], [257, 794], [257, 1000], [408, 1000], [408, 797], [330, 797], [330, 755], [257, 755], [257, 773]] },
+  { id: '009', buildingId: 'b1', label: 'АБК', points: [[230, 840], [430, 840], [430, 1056], [230, 1056]] },
+]
+
+const DETAILED_SITE_BUILDING_IDS = new Set(['b1', 'b2'])
+const SITE_SMART_ZOOM_PROMPT = 1.75
+const SITE_SMART_ZOOM_OPEN = 2.15
+const SITE_SMART_ZOOM_PADDING = 38
+
 const floors = [
   { id: 1, label: 'Этаж 1' },
   { id: 2, label: 'Этаж 2' },
@@ -56,7 +83,7 @@ interface MapPoint {
   building: string
 }
 
-// ── Корпус 1, Этаж 1. ViewBox 1190.55 × 841.89 ──────────────
+// ── АБК, Этаж 1. ViewBox 1190.55 × 841.89 ──────────────
 // Формула из spec(2048×881) → SVG(1190.55×841.89):
 //   svg_x = spec_x * 0.497 + 84
 //   svg_y = spec_y * 0.498 + 220
@@ -91,7 +118,7 @@ const allPoints: MapPoint[] = [
   { id: 'hr',           x: 1057, y: 500, label: 'Отдел кадров',           room: 'Каб. 205', category: 'office',   floor: 1, building: 'b1' },
   // ── Старт ───────────────────────────────────────────────────
   { id: 'start',        x: 951,  y: 522, label: 'Вход / Коридор',        room: 'Коридор',  category: 'start',    floor: 1, building: 'b1' },
-  // ── Корпус 1, Этаж 2 — подтверждённые помещения ─────────────
+  // ── АБК, Этаж 2 — подтверждённые помещения ─────────────
   { id: 'F2-R01', x: 300,  y: 284, label: 'Генеральный директор',                                      room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
   { id: 'F2-R02', x: 545,  y: 284, label: 'Мужской туалет',                                            room: '2 этаж', category: 'wc',     floor: 2, building: 'b1' },
   { id: 'F2-R03', x: 640,  y: 284, label: 'Женский туалет',                                            room: '2 этаж', category: 'wc',     floor: 2, building: 'b1' },
@@ -104,7 +131,7 @@ const allPoints: MapPoint[] = [
   { id: 'F2-R10', x: 800,  y: 477, label: 'Финансовый директор',                                       room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
   { id: 'F2-R11', x: 1005, y: 477, label: 'Бухгалтерия',                                               room: '2 этаж', category: 'office', floor: 2, building: 'b1' },
   { id: 'b1f2_start', x: 595, y: 370, label: 'Центральный коридор', room: '2 этаж', category: 'start', floor: 2, building: 'b1' },
-  // ── Корпус 1, Этаж 2 — двери и служебные маршрутные узлы ───
+  // ── АБК, Этаж 2 — двери и служебные маршрутные узлы ───
   { id: 'F2-D01A', x: 240, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
   { id: 'F2-D02',  x: 522, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
   { id: 'F2-D03',  x: 660, y: 345, label: '', room: '', category: 'corridor', floor: 2, building: 'b1' },
@@ -152,22 +179,22 @@ const allPoints: MapPoint[] = [
   { id: 'd_otiz',       x: 151,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'c_design_jct', x: 242,  y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'd_design',     x: 248,  y: 387, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  // ── Корпус 1, Этаж 1 — подтверждённые переходные узлы ──────
+  // ── АБК, Этаж 1 — подтверждённые переходные узлы ──────
   { id: 'F1-JS01', x: 306, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-S01',  x: 306, y: 500, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-JS02', x: 883, y: 415, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-S02',  x: 883, y: 500, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-B01',  x: 812, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  // Вход в блок раздевалок и санузлов 1 этажа подтверждён через переход к Корпусу 2.
+  // Вход в блок раздевалок и санузлов 1 этажа подтверждён через переход к производственному корпусу 1.
   { id: 'F1-SAN-F',  x: 688, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-SAN-WF', x: 592, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-SAN-WM', x: 546, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
   { id: 'F1-SAN-M',  x: 395, y: 228, label: '', room: '', category: 'corridor', floor: 1, building: 'b1' },
-  // ── Корпус 2, Этаж 1 — временная схема до загрузки плана ───
-  { id: 'B2-E01', x: 180, y: 420, label: 'Вход из Корпуса 1', room: 'Временная схема', category: 'start', floor: 1, building: 'b2' },
+  // ── Производственный корпус 1, Этаж 1 — временная схема до загрузки плана ───
+  { id: 'B2-E01', x: 180, y: 420, label: 'Вход из АБК', room: 'Временная схема', category: 'start', floor: 1, building: 'b2' },
   { id: 'B2-C01', x: 595, y: 420, label: '', room: '', category: 'corridor', floor: 1, building: 'b2' },
   { id: 'B2-D01', x: 900, y: 420, label: '', room: '', category: 'corridor', floor: 1, building: 'b2' },
-  { id: 'B2-P01', x: 900, y: 315, label: 'Условная точка Корпуса 2', room: 'Временная схема', category: 'office', floor: 1, building: 'b2' },
+  { id: 'B2-P01', x: 900, y: 315, label: 'Условная точка производственного корпуса 1', room: 'Временная схема', category: 'office', floor: 1, building: 'b2' },
 ]
 
 const visiblePoints = computed(() =>
@@ -204,7 +231,7 @@ const edges: [string, string][] = [
   ['start',      'start_door'],
   ['otiz',       'd_otiz'],
   ['design',     'd_design'],
-  // Блок раздевалок и санузлов 1 этажа: вход через переход к Корпусу 2.
+  // Блок раздевалок и санузлов 1 этажа: вход через переход к производственному корпусу 1.
   ['F1-B01',     'F1-SAN-F'],
   ['F1-SAN-F',   'F1-SAN-WF'],
   ['F1-SAN-WF',  'F1-SAN-WM'],
@@ -269,7 +296,7 @@ const edges: [string, string][] = [
   ['F1-S01', 'F2-S01'],
   ['F1-S02', 'F2-S02'],
   ['F1-B01', 'B2-E01'],
-  // ── Корпус 2: временный маршрут первого этажа ──────────────
+  // ── Производственный корпус 1: временный маршрут первого этажа ──────────────
   ['B2-E01', 'B2-C01'],
   ['B2-C01', 'B2-D01'],
   ['B2-D01', 'B2-P01'],
@@ -326,8 +353,8 @@ interface TransferMarker {
 const BUILDING2_ACCESS_IDS = ['locker_m', 'locker_f', 'wc_m', 'wc_f', 'wc_f_bottom', 'shower_m', 'shower_f']
 const POINT_ACCESS_NOTICES: Record<string, PointAccessNotice> = BUILDING2_ACCESS_IDS.reduce((acc, id) => {
   acc[id] = {
-    title: 'Вход через Корпус 2',
-    text: 'Это помещение доступно со стороны соседнего корпуса.',
+    title: 'Вход через производственный корпус 1',
+    text: 'Это помещение доступно со стороны производственного корпуса 1.',
   }
   return acc
 }, {} as Record<string, PointAccessNotice>)
@@ -385,6 +412,10 @@ function pointIsOnCurrentMap(point: MapPoint | undefined): boolean {
 
 function buildingLabel(id: string): string {
   return buildings.find(building => building.id === id)?.label ?? id
+}
+
+function sitePlanPoints(points: [number, number][]): string {
+  return points.map(([x, y]) => `${x},${y}`).join(' ')
 }
 
 function pointAccessNotice(point: MapPoint | undefined | null): PointAccessNotice | null {
@@ -568,6 +599,7 @@ function defaultStart(bId: string, fId: number): string {
   return 'start'
 }
 function changeBuilding(b: typeof buildings[0]) {
+  clearSmartZoomState()
   selectedBuilding.value = b
   selectedFloor.value = floors[0]
   showBuildingPicker.value = false
@@ -575,6 +607,7 @@ function changeBuilding(b: typeof buildings[0]) {
   resetVB()
 }
 function changeFloor(f: typeof floors[0]) {
+  clearSmartZoomState()
   selectedFloor.value = f
   showFloorPicker.value = false
   if (!targetId.value) startId.value = defaultStart(selectedBuilding.value.id, f.id)
@@ -586,7 +619,9 @@ function changeFloor(f: typeof floors[0]) {
 interface MapViewBox { x: number; y: number; w: number; h: number }
 
 const DEFAULT_VIEW_BOX: MapViewBox = { x: 0, y: 0, w: 1190.55, h: 841.89 }
+const SITE_VIEW_BOX: MapViewBox = { x: 0, y: 0, w: 841.89, h: 1190.55 }
 const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
+  site_1: { w: SITE_VIEW_BOX.w, h: SITE_VIEW_BOX.h },
   b1_1: { w: 1190.55, h: 841.89 },
   b1_2: { w: 1190.55, h: 841.89 },
   b2_1: { w: 1190.55, h: 841.89 },
@@ -595,6 +630,7 @@ const FLOOR_DIMS: Record<string, { w: number; h: number }> = {
 // Начальное кадрирование 1.10× выравнивает их воспринимаемый размер,
 // сохраняя исходные координаты карты и маркеров.
 const INITIAL_VIEW_BOXES: Record<string, MapViewBox> = {
+  site_1: SITE_VIEW_BOX,
   b1_1: DEFAULT_VIEW_BOX,
   b1_2: { x: 54.07, y: 38.24, w: 1082.40, h: 765.41 },
   b2_1: DEFAULT_VIEW_BOX,
@@ -606,14 +642,156 @@ const floorDims = computed(() => {
 const initialViewBox = computed(() => INITIAL_VIEW_BOXES[floorKey.value] ?? DEFAULT_VIEW_BOX)
 const vbX = ref(0)
 const vbY = ref(0)
-const vbW = ref(1190.55)
-const vbH = ref(841.89)
+const vbW = ref(SITE_VIEW_BOX.w)
+const vbH = ref(SITE_VIEW_BOX.h)
 const zoom = computed(() => floorDims.value.w / vbW.value)
 const baseZoom = computed(() => floorDims.value.w / initialViewBox.value.w)
 const isDragging = ref(false)
 const mapContainerRef = ref<HTMLElement | null>(null)
 
 const svgViewBox = computed(() => `${vbX.value} ${vbY.value} ${vbW.value} ${vbH.value}`)
+const smartZoomInArmedObjectId = ref<string | null>(null)
+const smartZoomOutArmed = ref(false)
+const lastZoomFocus = ref<{ x: number; y: number } | null>(null)
+
+function pointInPolygon(x: number, y: number, polygon: [number, number][]): boolean {
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i]
+    const [xj, yj] = polygon[j]
+    const intersects = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
+    if (intersects) inside = !inside
+  }
+  return inside
+}
+
+function siteObjectCenter(object: SitePlanObject): { x: number; y: number } {
+  const total = object.points.reduce((acc, [x, y]) => ({ x: acc.x + x, y: acc.y + y }), { x: 0, y: 0 })
+  return { x: total.x / object.points.length, y: total.y / object.points.length }
+}
+
+function siteObjectBounds(object: SitePlanObject) {
+  const xs = object.points.map(([x]) => x)
+  const ys = object.points.map(([, y]) => y)
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  }
+}
+
+function siteObjectSmartPadding(object: SitePlanObject): number {
+  if (object.id === '009') return 92
+  if (object.id === '002' || object.id === '007') return 58
+  return SITE_SMART_ZOOM_PADDING
+}
+
+function pointInExpandedSiteObject(x: number, y: number, object: SitePlanObject): boolean {
+  const bounds = siteObjectBounds(object)
+  const padding = siteObjectSmartPadding(object)
+  return x >= bounds.minX - padding
+    && x <= bounds.maxX + padding
+    && y >= bounds.minY - padding
+    && y <= bounds.maxY + padding
+}
+
+function siteObjectDistanceToProbe(object: SitePlanObject, x: number, y: number): number {
+  const center = siteObjectCenter(object)
+  return Math.hypot(center.x - x, center.y - y)
+}
+
+function siteObjectHasDetailedMap(object: SitePlanObject): boolean {
+  return DETAILED_SITE_BUILDING_IDS.has(object.buildingId)
+}
+
+const siteViewCenter = computed(() => ({
+  x: vbX.value + vbW.value / 2,
+  y: vbY.value + vbH.value / 2,
+}))
+
+const siteObjectAtViewCenter = computed(() => {
+  if (!isProductionOverview.value) return null
+  const probe = lastZoomFocus.value ?? siteViewCenter.value
+  const exact = SITE_PLAN_OBJECTS.find(object => pointInPolygon(probe.x, probe.y, object.points))
+  if (exact) return exact
+
+  const candidates = SITE_PLAN_OBJECTS
+    .filter(object => pointInExpandedSiteObject(probe.x, probe.y, object))
+    .sort((a, b) => siteObjectDistanceToProbe(a, probe.x, probe.y) - siteObjectDistanceToProbe(b, probe.x, probe.y))
+
+  return candidates[0] ?? null
+})
+
+const smartZoomInCandidate = computed(() => {
+  if (!isProductionOverview.value || zoom.value < SITE_SMART_ZOOM_PROMPT) return null
+  const object = siteObjectAtViewCenter.value
+  if (!object) return null
+  return object
+})
+
+const smartZoomPrompt = computed(() => {
+  const inCandidate = smartZoomInCandidate.value
+  if (inCandidate) {
+    const hasDetailedMap = siteObjectHasDetailedMap(inCandidate)
+    return {
+      mode: 'in',
+      title: hasDetailedMap ? 'Открыть подробную карту' : 'Открыть объект',
+      text: hasDetailedMap
+        ? `Фокус зума находится в зоне «${inCandidate.label}».`
+        : `Фокус зума находится в зоне «${inCandidate.label}». Подробная схема будет добавлена позже.`,
+      action: `Открыть ${buildingLabel(inCandidate.buildingId)}`,
+    }
+  }
+  if (!isProductionOverview.value && smartZoomOutArmed.value) {
+    return {
+      mode: 'out',
+      title: 'Вернуться на генплан',
+      text: 'Объект открыт в общем масштабе.',
+      action: 'Общая карта',
+    }
+  }
+  return null
+})
+
+const canOpenSmartZoomIn = computed(() => {
+  const candidate = smartZoomInCandidate.value
+  return !!candidate && smartZoomInArmedObjectId.value === candidate.id
+})
+
+const zoomInDisabled = computed(() => zoom.value >= 2.5 && !canOpenSmartZoomIn.value)
+const zoomOutDisabled = computed(() => isProductionOverview.value && zoom.value <= baseZoom.value + 0.001)
+
+function clearSmartZoomState() {
+  smartZoomInArmedObjectId.value = null
+  smartZoomOutArmed.value = false
+  lastZoomFocus.value = null
+}
+
+function openSitePlanObject(object: SitePlanObject) {
+  const building = buildings.find(item => item.id === object.buildingId)
+  if (!building) return
+  clearSmartZoomState()
+  changeBuilding(building)
+  haptic.light()
+}
+
+function returnToProductionOverview() {
+  const overview = buildings.find(item => item.overview)
+  if (!overview) return
+  clearSmartZoomState()
+  changeBuilding(overview)
+  haptic.light()
+}
+
+function activateSmartZoomPrompt() {
+  const inCandidate = smartZoomInCandidate.value
+  if (inCandidate) {
+    openSitePlanObject(inCandidate)
+    return
+  }
+  if (!isProductionOverview.value && smartZoomOutArmed.value) returnToProductionOverview()
+}
 
 function clampVB() {
   const { w, h } = floorDims.value
@@ -640,15 +818,44 @@ function zoomAround(newZoom: number, pivotX?: number, pivotY?: number) {
   const px = pivotX ?? cW / 2, py = pivotY ?? cH / 2
   const svgPx = vbX.value + px * vbW.value / cW
   const svgPy = vbY.value + py * vbH.value / cH
+  lastZoomFocus.value = { x: svgPx, y: svgPy }
   const { w, h } = floorDims.value
   const cz = Math.min(Math.max(newZoom, baseZoom.value), 3)
   const nW = w / cz, nH = h / cz
   if (cz <= baseZoom.value + 0.001) { resetVB() }
   else { vbX.value = svgPx - px * nW / cW; vbY.value = svgPy - py * nH / cH; vbW.value = nW; vbH.value = nH; clampVB() }
 }
-function zoomIn()  { zoomAround(zoom.value + 0.25); haptic.tap() }
-function zoomOut() { zoomAround(zoom.value - 0.25); haptic.tap() }
-function resetMapView() { resetVB(); haptic.tap() }
+function zoomIn()  {
+  const candidate = smartZoomInCandidate.value
+  if (candidate && smartZoomInArmedObjectId.value === candidate.id) {
+    openSitePlanObject(candidate)
+    return
+  }
+
+  zoomAround(zoom.value + 0.25)
+  const nextCandidate = smartZoomInCandidate.value
+  smartZoomInArmedObjectId.value = nextCandidate?.id ?? null
+  smartZoomOutArmed.value = false
+  haptic.tap()
+}
+function zoomOut() {
+  if (!isProductionOverview.value && zoom.value <= baseZoom.value + 0.001) {
+    if (smartZoomOutArmed.value) returnToProductionOverview()
+    else {
+      smartZoomOutArmed.value = true
+      smartZoomInArmedObjectId.value = null
+      haptic.tap()
+    }
+    return
+  }
+
+  zoomAround(zoom.value - 0.25)
+  smartZoomInArmedObjectId.value = null
+  if (!isProductionOverview.value && zoom.value <= baseZoom.value + 0.001) smartZoomOutArmed.value = true
+  else smartZoomOutArmed.value = false
+  haptic.tap()
+}
+function resetMapView() { clearSmartZoomState(); resetVB(); haptic.tap() }
 
 // ── Mouse drag ────────────────────────────────────────────────
 let _mp = { x: 0, y: 0 }
@@ -659,6 +866,7 @@ function onMapMouseDown(e: MouseEvent) {
 function onMapMouseMove(e: MouseEvent) {
   if (!isDragging.value) return
   const el = mapContainerRef.value; if (!el) return
+  clearSmartZoomState()
   const sx = vbW.value / el.clientWidth, sy = vbH.value / el.clientHeight
   vbX.value -= (e.clientX - _mp.x) * sx; vbY.value -= (e.clientY - _mp.y) * sy
   clampVB(); _mp = { x: e.clientX, y: e.clientY }
@@ -667,9 +875,15 @@ function onMapMouseUp() { isDragging.value = false }
 
 // ── Touch ─────────────────────────────────────────────────────
 let _tp = { x: 0, y: 0 }, _tDrag = false
+let _pinchActive = false
+let _pinchStartArmedObjectId: string | null = null
+let _pinchStartSmartOutArmed = false
 function onMapTouchStart(e: TouchEvent) {
   if (e.touches.length === 2) {
     _tDrag = false; pinchStartDist = getPinchDist(e); pinchStartZoom = zoom.value
+    _pinchActive = true
+    _pinchStartArmedObjectId = smartZoomInArmedObjectId.value
+    _pinchStartSmartOutArmed = smartZoomOutArmed.value
   } else if (e.touches.length === 1) {
     _tDrag = true; _tp = { x: e.touches[0].clientX, y: e.touches[0].clientY }
   }
@@ -685,6 +899,7 @@ function onMapTouchMove(e: TouchEvent) {
     zoomAround(nz, cx, cy)
   } else if (e.touches.length === 1 && _tDrag) {
     const el = mapContainerRef.value; if (!el) return
+    clearSmartZoomState()
     const sx = vbW.value / el.clientWidth, sy = vbH.value / el.clientHeight
     vbX.value -= (e.touches[0].clientX - _tp.x) * sx
     vbY.value -= (e.touches[0].clientY - _tp.y) * sy
@@ -692,8 +907,38 @@ function onMapTouchMove(e: TouchEvent) {
   }
 }
 function onMapTouchEnd(e: TouchEvent) {
-  if (e.touches.length < 2) pinchStartDist = 0
+  if (e.touches.length < 2) {
+    if (_pinchActive) handleSmartZoomAfterPinch()
+    pinchStartDist = 0
+    _pinchActive = false
+    _pinchStartArmedObjectId = null
+    _pinchStartSmartOutArmed = false
+  }
   if (e.touches.length === 0) _tDrag = false
+}
+
+function handleSmartZoomAfterPinch() {
+  if (isProductionOverview.value) {
+    const candidate = smartZoomInCandidate.value
+    if (!candidate) {
+      smartZoomInArmedObjectId.value = null
+      return
+    }
+
+    if (_pinchStartArmedObjectId === candidate.id && zoom.value >= SITE_SMART_ZOOM_OPEN) {
+      openSitePlanObject(candidate)
+    } else {
+      smartZoomInArmedObjectId.value = candidate.id
+    }
+    return
+  }
+
+  if (zoom.value <= baseZoom.value + 0.001) {
+    if (_pinchStartSmartOutArmed) returnToProductionOverview()
+    else smartZoomOutArmed.value = true
+  } else {
+    smartZoomOutArmed.value = false
+  }
 }
 
 const categoryLabels: Record<string, string> = {
@@ -841,7 +1086,11 @@ const hasMapForCurrentView = computed(() =>
   isProductionOverview.value || allPoints.some(p => p.floor === selectedFloor.value.id && p.building === selectedBuilding.value.id && p.category !== 'corridor')
 )
 
-const currentMapImage = computed(() => `${import.meta.env.BASE_URL}maps/${selectedBuilding.value.id}_floor${selectedFloor.value.id}.svg`)
+const currentMapImage = computed(() =>
+  isProductionOverview.value
+    ? `${import.meta.env.BASE_URL}maps/site_plan.svg`
+    : `${import.meta.env.BASE_URL}maps/${selectedBuilding.value.id}_floor${selectedFloor.value.id}.svg`
+)
 
 function roomFill(id: string, _default: string): string {
   if (targetId.value === id) return 'rgba(59,130,246,0.22)'
@@ -928,50 +1177,19 @@ function roomStrokeOpacity(id: string): number {
       <div v-else class="nav-page__map-inner">
         <svg :viewBox="svgViewBox" class="nav-page__svg" xmlns="http://www.w3.org/2000/svg">
           <!-- Архитектурный план (фон) — рендерится в натуральном разрешении через viewBox -->
-          <image v-if="!isProductionOverview" :href="currentMapImage" x="0" y="0" :width="floorDims.w" :height="floorDims.h"/>
+          <image :href="currentMapImage" x="0" y="0" :width="floorDims.w" :height="floorDims.h"/>
 
-          <!-- ═══ ОБЩАЯ КАРТА ПРОИЗВОДСТВА · ВРЕМЕННАЯ СХЕМА ═══ -->
+          <!-- ═══ ОБЩАЯ КАРТА ПРОИЗВОДСТВА · ГЕНПЛАН ═══ -->
           <template v-if="isProductionOverview">
-            <rect x="40" y="70" width="1110" height="670" rx="34" fill="#f8fafc" stroke="#c8d5e8" stroke-width="3"/>
-            <path d="M130 455 H1040" stroke="#cbd5e1" stroke-width="34" stroke-linecap="round"/>
-            <path d="M595 205 V675" stroke="#cbd5e1" stroke-width="28" stroke-linecap="round"/>
-            <text x="595" y="185" text-anchor="middle" font-size="26" fill="#0f172a" font-family="sans-serif" font-weight="800" style="pointer-events:none">Общая карта производства</text>
-            <text x="595" y="214" text-anchor="middle" font-size="14" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Схема территории под 7 корпусов · временный обзор до загрузки точного генплана</text>
-
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b1')">
-              <rect x="130" y="255" width="230" height="140" rx="18" :fill="selectedBuilding.id === 'b1' ? '#dbeafe' : '#ffffff'" stroke="#0079C2" stroke-width="3"/>
-              <text x="245" y="320" text-anchor="middle" font-size="22" fill="#075985" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 1</text>
-              <text x="245" y="349" text-anchor="middle" font-size="13" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Главный корпус</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b2')">
-              <rect x="415" y="255" width="230" height="140" rx="18" :fill="selectedBuilding.id === 'b2' ? '#dbeafe' : '#ffffff'" stroke="#0079C2" stroke-width="3"/>
-              <text x="530" y="320" text-anchor="middle" font-size="22" fill="#075985" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 2</text>
-              <text x="530" y="349" text-anchor="middle" font-size="13" fill="#64748b" font-family="sans-serif" style="pointer-events:none">Производственный</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b3')">
-              <rect x="770" y="255" width="230" height="140" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
-              <text x="885" y="320" text-anchor="middle" font-size="22" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 3</text>
-              <text x="885" y="349" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b4')">
-              <rect x="130" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
-              <text x="235" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 4</text>
-              <text x="235" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b5')">
-              <rect x="390" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
-              <text x="495" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 5</text>
-              <text x="495" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b6')">
-              <rect x="650" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
-              <text x="755" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 6</text>
-              <text x="755" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
-            </g>
-            <g class="production-building" style="cursor:pointer" @click="changeBuildingById('b7')">
-              <rect x="910" y="500" width="210" height="125" rx="18" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
-              <text x="1015" y="558" text-anchor="middle" font-size="21" fill="#334155" font-family="sans-serif" font-weight="800" style="pointer-events:none">Корпус 7</text>
-              <text x="1015" y="585" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="sans-serif" style="pointer-events:none">план будет добавлен</text>
+            <g
+              v-for="object in SITE_PLAN_OBJECTS"
+              :key="object.id"
+              class="site-plan-hit-area"
+              role="button"
+              :aria-label="`Открыть ${object.label}`"
+              @click="changeBuildingById(object.buildingId)"
+            >
+              <polygon :points="sitePlanPoints(object.points)"/>
             </g>
           </template>
 
@@ -1180,15 +1398,16 @@ function roomStrokeOpacity(id: string): number {
             <text x="1005" y="480" text-anchor="middle" font-size="14" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Бухгалтерия</text>
           </template>
 
-          <!-- ═══ КОРПУС 2 · ЭТАЖ 1 · ВРЕМЕННАЯ СХЕМА ═══ -->
+          <!-- ═══ ПРОИЗВОДСТВЕННЫЙ КОРПУС 1 · ЭТАЖ 1 · ВРЕМЕННАЯ СХЕМА ═══ -->
           <template v-if="selectedBuilding.id === 'b2' && selectedFloor.id === 1">
             <rect x="760" y="235" width="320" height="145"
               :fill="roomFill('B2-P01','')" :stroke="roomStroke('B2-P01','')"
               :stroke-width="roomStrokeWidth('B2-P01')" :stroke-opacity="roomStrokeOpacity('B2-P01')"
               style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" @click="selectPoint('B2-P01')"/>
-            <text x="920" y="300" text-anchor="middle" font-size="17" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Условная точка</text>
-            <text x="920" y="323" text-anchor="middle" font-size="17" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Корпуса 2</text>
-            <text x="920" y="345" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif" font-weight="700" style="pointer-events:none">Временное назначение</text>
+            <text x="920" y="292" text-anchor="middle" font-size="16" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">Условная точка</text>
+            <text x="920" y="314" text-anchor="middle" font-size="16" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">производственного</text>
+            <text x="920" y="336" text-anchor="middle" font-size="16" fill="#3730a3" font-family="sans-serif" font-weight="700" style="pointer-events:none">корпуса 1</text>
+            <text x="920" y="358" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif" font-weight="700" style="pointer-events:none">Временное назначение</text>
           </template>
 
           <!-- ═══ МАРШРУТ ═══ -->
@@ -1233,12 +1452,33 @@ function roomStrokeOpacity(id: string): number {
 
       <!-- Zoom -->
       <div class="nav-page__zoom" @mousedown.stop @touchstart.stop>
-        <button class="nav-page__zoom-btn" type="button" aria-label="Увеличить карту" @click="zoomIn"  :disabled="zoom >= 2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="nav-page__zoom-btn" type="button" aria-label="Увеличить карту" @click="zoomIn"  :disabled="zoomInDisabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="nav-page__zoom-sep" />
-        <button class="nav-page__zoom-btn" type="button" aria-label="Уменьшить карту" @click="zoomOut" :disabled="zoom <= baseZoom + 0.001"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="nav-page__zoom-btn" type="button" aria-label="Уменьшить карту" @click="zoomOut" :disabled="zoomOutDisabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="nav-page__zoom-sep" />
         <button class="nav-page__zoom-btn" type="button" aria-label="Вернуть карту к исходному масштабу" @click="resetMapView"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v8h8"/></svg></button>
       </div>
+
+      <Transition name="smart-zoom">
+        <button
+          v-if="smartZoomPrompt"
+          class="nav-page__smart-zoom"
+          type="button"
+          @click="activateSmartZoomPrompt"
+          @mousedown.stop
+          @touchstart.stop
+        >
+          <span class="nav-page__smart-zoom-icon">
+            <svg v-if="smartZoomPrompt.mode === 'in'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 3h6v6"/><path d="M21 3l-7 7"/><path d="M9 21H3v-6"/><path d="M3 21l7-7"/></svg>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v8h8"/></svg>
+          </span>
+          <span class="nav-page__smart-zoom-copy">
+            <strong>{{ smartZoomPrompt.title }}</strong>
+            <small>{{ smartZoomPrompt.text }}</small>
+          </span>
+          <span class="nav-page__smart-zoom-action">{{ smartZoomPrompt.action }}</span>
+        </button>
+      </Transition>
 
       <div class="nav-page__bottom-card" :class="{ 'has-target': !!targetId, 'is-active': hasActiveRoute }" @mousedown.stop @touchstart.stop>
         <template v-if="targetId">
@@ -1641,6 +1881,19 @@ function roomStrokeOpacity(id: string): number {
 }
 .nav-page__map-inner { height: 100%; }
 .nav-page__svg { width: 100%; height: 100%; display: block; touch-action: none; }
+.site-plan-hit-area {
+  cursor: pointer;
+}
+.site-plan-hit-area polygon {
+  fill: rgba(0, 121, 194, 0);
+  stroke: rgba(0, 121, 194, 0);
+  stroke-width: 7;
+}
+.site-plan-hit-area:hover polygon,
+.site-plan-hit-area:focus-visible polygon {
+  fill: rgba(0, 121, 194, 0);
+  stroke: rgba(0, 121, 194, 0);
+}
 
 .route-anim { animation: dashFlow 1.5s linear infinite; }
 @keyframes dashFlow { to { stroke-dashoffset: -18; } }
@@ -1670,6 +1923,77 @@ function roomStrokeOpacity(id: string): number {
 .nav-page__zoom-btn:active:not(:disabled) { background: var(--c-accent-dim); }
 .nav-page__zoom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .nav-page__zoom-sep { height: 1px; background: rgba(200,215,232,.85); }
+
+.nav-page__smart-zoom {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 112px;
+  z-index: 14;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,121,194,.24);
+  border-radius: var(--r-lg);
+  background: rgba(255,255,255,.95);
+  color: var(--c-text);
+  box-shadow: 0 10px 24px rgba(15,23,42,.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: var(--font-body);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+}
+.nav-page__smart-zoom-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: var(--c-accent-dim);
+  color: var(--c-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-page__smart-zoom-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-page__smart-zoom-copy strong {
+  color: var(--c-text);
+  font-size: var(--fs-xs);
+  font-weight: 900;
+}
+.nav-page__smart-zoom-copy small {
+  color: var(--c-text-2);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-page__smart-zoom-action {
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.smart-zoom-enter-active,
+.smart-zoom-leave-active {
+  transition: opacity var(--dur-fast), transform var(--dur-fast);
+}
+.smart-zoom-enter-from,
+.smart-zoom-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
 
 .nav-page__bottom-card {
   position: absolute;
@@ -1994,6 +2318,21 @@ function roomStrokeOpacity(id: string): number {
   }
   .nav-page__map-route-panel p { -webkit-line-clamp: 1; }
   .nav-page__zoom { right: 8px; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .nav-page__smart-zoom {
+    left: 8px;
+    right: 8px;
+    bottom: 86px;
+    min-height: 48px;
+    padding: 7px 8px;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+  .nav-page__smart-zoom-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+  }
+  .nav-page__smart-zoom-copy small { display: none; }
+  .nav-page__smart-zoom-action { padding: 7px 8px; }
   .nav-page__bottom-card {
     left: 8px;
     right: 8px;
